@@ -1,25 +1,27 @@
 # IRC bot for UKHASnet Project
 
-## Connection Class
+## Class List
+
+### Connection Class
 Handles connection to server
 Creates own thread
 
-## Config Class
+### Config Class
 Handles reading the config file and making the config values available.
 
 
-## Message Class
+### Message Class
 Used to store mesasges to and from the server
 
 
-## Queue Handler Class
+### Queue Handler Class
 Handles incomming messages
 Threaded
 
-## Database Class ??
+### Database Class ??
 Handles connection to DB
 
-## Handler Class
+### Handler Class
 Base class for handling commands
 need mothod to register command with main handler
 lookup table to match command to Handler
@@ -29,11 +31,15 @@ lookup table to match command to Handler
 
 
 
-## Logger Class	(extends Handler ?)
+### Logger Class	(extends Handler ?)
 Logs messages to the DB
 
-## Node class
+### Node class
 provides !node functions
 	status
 	last packet
 
+## Ubuntu Installation
+sudo apt-get install g++
+sudo apt-get install make
+sudo apt-get install libjansson-dev
