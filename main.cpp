@@ -9,9 +9,18 @@ int main(int argc, char **argv){
 	fprintf(stderr,"Starting with PID %d\n", getpid());
 	Connection c;
 
+	c.setServer("gateway.yapd.net");
+	c.setNick("HasBot");
+	c.setUser("HasBot");
+
+
+
 	c.connect();
 
-	for (int i=0; i<30; i++){
+	sleep(5);
+	c.join("#foo");
+
+	for (int i=0; i<600; i++){
 		sleep(1);
 	}
 	c.disconnect();

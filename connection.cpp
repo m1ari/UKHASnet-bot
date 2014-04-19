@@ -1,4 +1,6 @@
 #include <string>
+#include <iostream>
+#include <algorithm>
 #include <cstring>
 #include <cstdio>
 #include <typeinfo>
@@ -11,13 +13,9 @@
 #include "connection.h"
 
 namespace UKHASnet {
-
 	Connection::Connection() {
 		run=false;
-		server="gateway.yapd.net";
-		nick="HasBot";
-		username="HasBot";
-		buffsize=100;
+		connected=false;
 	};
 	Connection::~Connection() {
 	};
@@ -68,20 +66,59 @@ namespace UKHASnet {
 			perror("Connet Error");
 			//return (1);
 		}
-		printf("Connected \n");
 
+		// set socket to non blocking
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = 100 * 1000;
+		if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+			perror("Timeout");
+			//exit(1);
+		}
+
+
+
+		printf("Connected \n");
 		sendNick();
 		sendUser();
 		//sendPassword();
+		// TODO Join Channels in Channel list
 
+		unsigned int counter=0;
+
+		std::string buffer;	// Buffer to work with
+		char readbuff[513];	// read Buffer	(max line is 512)
+		int bytes;		// Number of bytes read
+
+		connected=true;
 
 		while (run){
-			fprintf(stderr, "Connection Loop still running\n");
-			sleep(1);
+			memset(readbuff,0,513);
+			bytes=read(sockfd,readbuff,512);
+			if (bytes>0){
+				buffer+=readbuff;
+			}
+			std::string line;
+			std::string::iterator pos;
+			while ((pos=std::find(buffer.begin(), buffer.end(), '\n')) != buffer.end()){
+				line   = std::string(buffer.begin(),pos);
+				buffer = std::string(pos+1, buffer.end());
+
+				if (line.find("PING") == 0){
+					sendPong(line);
+				} else {
+					std::cout << "Line: " << line << std::endl;
+					// Line: :mfa298!~mfa298@gateway.yapd.net PRIVMSG #foo :bar
+					// Line: :mfa298!~mfa298@gateway.yapd.net PRIVMSG HasBot :foobar
+				}
+			}
+			// TODO handle server disconnecting
+
 		}
+		connected=false;
 	}
 
-	void Connection::sendBuffer(char* buf, size_t length){
+	void Connection::sendBuffer(const char* buf, size_t length){
 		send(sockfd, buf, length, 0);
 
 	}
@@ -94,36 +131,65 @@ namespace UKHASnet {
 		// TODO Code to disconnect cleanly and clean up
 		//syslog(LOG_NOTICE,"Connection: Thread Stopped");
 	}
+
 	void Connection::sendNick(){
-		char buffer[buffsize+1];
-		snprintf(buffer,100,"NICK %s\r\n",nick.c_str());
-		sendBuffer(buffer, buffsize+1);
-	}
-	void Connection::sendUser(){
-		char buffer[buffsize+1];
-		snprintf(buffer,100,"USER %s %d * : %s\r\n",username.c_str(),8,realname.c_str());
-		sendBuffer(buffer, buffsize+1);
-		//USER Bot 8 * : HasBot
-	}
-	void Connection::sendPong(){
+		char buffer[101];
+		snprintf(buffer,101,"NICK %s\r\n",nick.c_str());
+		sendBuffer(buffer, strlen(buffer));
 	}
 
+	void Connection::sendUser(){
+		char buffer[101];
+		// TODO Test username and realname are set to something sensible
+		snprintf(buffer,101,"USER %s %d * : %s\r\n",username.c_str(),8,realname.c_str());
+		sendBuffer(buffer, strlen(buffer));
+	}
+
+	void Connection::sendPong(std::string req){
+		req[1]='O';
+		sendBuffer(req.c_str(),req.length());
+	}
+
+	void Connection::sendJoin(std::string chan){
+		char buffer[101];
+		if (connected == true){
+			snprintf(buffer,101,"JOIN %s\r\n", chan.c_str());
+			sendBuffer(buffer, strlen(buffer));
+		}
+	}
 	void Connection::sendMsg(std::string dest, std::string msg){
 	}
 
 	void Connection::setServer(std::string in){
+		// TODO Test if we're connected
+		server=in;
 	}
 
 	void Connection::setNick(std::string in){
+		// TODO test is we're connected
+		if (connected == false){
+			nick=in;
+		} else {
+			nick=in;
+			sendNick();
+		}
 	}
 
 	void Connection::setUser(std::string in){
+		if (connected == false){
+			username=in;
+		} else {
+		}
 	}
 
 	void Connection::setPassword(std::string in){
 	}
 
 	void Connection::join(std::string channel){
+		// TODO add channel to list of channels
+		if (connected == true){
+			sendJoin(channel);
+		}
 	}
 
 	void Connection::part(std::string channel){
@@ -131,11 +197,11 @@ namespace UKHASnet {
 	}
 
 	void Connection::part(std::string channel, std::string msg){
-		char buffer[buffsize+1];
+		char buffer[101];
 		if (msg==""){
-			snprintf(buffer,100,"PART %s\r\n",channel.c_str());
+			snprintf(buffer,101,"PART %s\r\n",channel.c_str());
 		} else {
-			snprintf(buffer,100,"PART %s : %s\r\n",channel.c_str(),msg.c_str());
+			snprintf(buffer,101,"PART %s : %s\r\n",channel.c_str(),msg.c_str());
 		}
 		sendBuffer(buffer, strlen(buffer));
 	}

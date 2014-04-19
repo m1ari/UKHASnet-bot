@@ -7,11 +7,10 @@ namespace UKHASnet {
 
 class Connection {
 	private:
-		int buffsize;
 		pthread_t threadid;
 		bool run;
+		bool connected;
 		int sockfd;
-		int connected;
 		//struct sockaddr_in dest;
 		//struct hostent *he;
 		std::string server;
@@ -23,11 +22,11 @@ class Connection {
 
 		static void* entryPoint(void *pthis);
 		void mainLoop();
-		void sendBuffer(char* buf, size_t length);
+		void sendBuffer(const char* buf, size_t length);
 		void sendNick();
 		void sendUser();
-		void sendPong();
-		void sendPong(std::string incomming);
+		void sendPong(std::string req);
+		void sendJoin(std::string chan);
 		void sendMsg(std::string dest, std::string msg);
 	public:
 		Connection();
