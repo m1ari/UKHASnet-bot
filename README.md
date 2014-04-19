@@ -34,8 +34,13 @@ lookup table to match command to Handler
 ### Logger Class	(extends Handler ?)
 Logs messages to the DB
 
+### Seen Class
+Responds to !seen
+Records last time a nick was seen
+
 ### Node class
-provides !node functions
+Responds to !node
+Commands:
 	status
 	last packet
 
