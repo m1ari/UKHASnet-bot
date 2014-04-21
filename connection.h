@@ -11,8 +11,6 @@ class Connection {
 		bool run;
 		bool connected;
 		int sockfd;
-		//struct sockaddr_in dest;
-		//struct hostent *he;
 		std::string server;
 		std::string nick;
 		std::string username;
@@ -27,6 +25,7 @@ class Connection {
 		void sendUser();
 		void sendPong(std::string req);
 		void sendJoin(std::string chan);
+		void sendPart(std::string chan, std::string msg);
 		void sendMsg(std::string dest, std::string msg);
 	public:
 		Connection();
@@ -35,11 +34,10 @@ class Connection {
 		void setNick(std::string in);
 		void setUser(std::string in);
 		void setPassword(std::string in);
-		int connect();	// Starts new thread
-		void disconnect();
-		void join(std::string channel);
-		void part(std::string channel);
-		void part(std::string channel, std::string msg);
+		int connect();				// Starts new thread
+		void disconnect();			// Stops thread and disconnects from server
+		void join(std::string channel);		// Join Channel
+		void part(std::string channel, std::string msg="");	// Leave Channel
 	protected:
 
 };

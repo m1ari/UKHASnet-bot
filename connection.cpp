@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 //#include <syslog.h>
+#include <unistd.h>
 #include "connection.h"
 
 namespace UKHASnet {
@@ -76,8 +77,6 @@ namespace UKHASnet {
 			//exit(1);
 		}
 
-
-
 		printf("Connected \n");
 		sendNick();
 		sendUser();
@@ -108,8 +107,19 @@ namespace UKHASnet {
 					sendPong(line);
 				} else {
 					std::cout << "Line: " << line << std::endl;
+					// Message in Channel
 					// Line: :mfa298!~mfa298@gateway.yapd.net PRIVMSG #foo :bar
+					// Private Message
 					// Line: :mfa298!~mfa298@gateway.yapd.net PRIVMSG HasBot :foobar
+					//
+					// Join Channel
+					// Line: :HasBot!~HasBot@gateway.yapd.net JOIN :#foo
+					// Line: :gateway.yapd.net 353 HasBot = #foo :HasBot @mfa298
+					// Line: :gateway.yapd.net 366 HasBot #foo :End of NAMES list
+					//
+					// Leave Channel (with message)
+					// Line: :HasBot!~HasBot@gateway.yapd.net PART #foo :HasBot
+					// Line: :HasBot!~HasBot@gateway.yapd.net PART #foo : wibble
 				}
 			}
 			// TODO handle server disconnecting
@@ -157,6 +167,17 @@ namespace UKHASnet {
 			sendBuffer(buffer, strlen(buffer));
 		}
 	}
+
+	void Connection::sendPart(std::string c, std::string m){
+		char buffer[101];
+		if (m==""){
+			snprintf(buffer,101,"PART %s\r\n",c.c_str());
+		} else {
+			snprintf(buffer,101,"PART %s : %s\r\n",c.c_str(),m.c_str());
+		}
+		sendBuffer(buffer, strlen(buffer));
+	}
+
 	void Connection::sendMsg(std::string dest, std::string msg){
 	}
 
@@ -192,23 +213,13 @@ namespace UKHASnet {
 		}
 	}
 
-	void Connection::part(std::string channel){
-		part(channel,"");
-	}
+	//void Connection::part(std::string channel ){
+		//part(channel,"");
+	//}
 
 	void Connection::part(std::string channel, std::string msg){
-		char buffer[101];
-		if (msg==""){
-			snprintf(buffer,101,"PART %s\r\n",channel.c_str());
-		} else {
-			snprintf(buffer,101,"PART %s : %s\r\n",channel.c_str(),msg.c_str());
-		}
-		sendBuffer(buffer, strlen(buffer));
+		// TODO remove from the list of channels
+		sendPart(channel, msg);
+
 	}
-
 }
-
-
-
-
-
