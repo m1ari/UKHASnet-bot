@@ -14,6 +14,8 @@
 #include "connection.h"
 
 namespace UKHASnet {
+namespace irc {
+
 	Connection::Connection() {
 		run=false;
 		connected=false;
@@ -222,4 +224,5 @@ namespace UKHASnet {
 		sendPart(channel, msg);
 
 	}
+}
 }

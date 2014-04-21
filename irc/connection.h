@@ -4,6 +4,7 @@
 #include <string>
 
 namespace UKHASnet {
+namespace irc {
 
 class Connection {
 	private:
@@ -42,5 +43,6 @@ class Connection {
 
 };
 
+}
 }
 #endif
