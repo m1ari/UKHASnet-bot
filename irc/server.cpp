@@ -32,6 +32,10 @@ namespace irc {
 	void Server::setPass(std::string p){
 		password=p;
 	}
+	void Server::addChannel(std::string c){
+	}
+	void Server::delChannel(std::string c){
+	}
 
 	std::string Server::getName() const {
 		return name;
@@ -51,5 +55,6 @@ namespace irc {
 	std::string Server::getPass() const {
 		return password;
 	}
+	
 }
 }

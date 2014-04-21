@@ -1,5 +1,6 @@
 #include <jansson.h>
 #include "config.h"
+#include "irc/server.h"
 
 // TODO Add mutexes around objects
 // Method to save out json
@@ -13,6 +14,7 @@ namespace UKHASnet {
 	}
 
 	Config::~Config() {
+		json_decref(json);
 	}
 
 	void Config::setFile(std::string f){
@@ -50,19 +52,47 @@ namespace UKHASnet {
 		}
 		return val;
 	}
-	void Config::getIrcServer(int server) const {
+	irc::Server Config::getIrcServer(int server) const {
+		irc::Server s;
 		json_t *obj=NULL;
-		json_t *servername=NULL;
+		json_t *item=NULL;
 		if (json!=NULL){
 			obj=json_object_get(json,"irc");
-			obj=json_array_get(obj,server);
+			if (json_is_array(obj)){
+				obj=json_array_get(obj,server);
+				if (json_is_object(obj)){
+					item=json_object_get(obj,"server");
+					if(json_is_string(item)){
+						s.setName(json_string_value(item));
+						s.setServer(json_string_value(item));
+					}
 
-			servername=json_object_get(obj,"server");
-			printf("JSON Server: %s\n",json_string_value(servername));
+					item=json_object_get(obj,"nick");
+					if(json_is_string(item)){
+						s.setNick(json_string_value(item));
+					}
+
+					item=json_object_get(obj,"username");
+					if(json_is_string(item)){
+						s.setUser(json_string_value(item));
+					}
+
+					item=json_object_get(obj,"realname");
+					if(json_is_string(item)){
+						s.setRealname(json_string_value(item));
+					}
+
+					item=json_object_get(obj,"password");
+					if(json_is_string(item)){
+						s.setPass(json_string_value(item));
+					}
+
+					//channels
+				}
+			}
 		}
+		return s;
 	}
-
-
 
 	std::string Config::getString(int count, ... ) const {
 		json_t *obj=NULL;

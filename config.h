@@ -3,8 +3,11 @@
 
 #include <jansson.h>
 #include <string>
+#include "irc/server.h"
 
 namespace UKHASnet {
+
+//class irc::Server;	// Forward declare has issues
 
 class Config {
 	private:
@@ -18,9 +21,7 @@ class Config {
 		void loadConfig();
 
 		size_t getNumIrcServers() const;
-		void getIrcServer(int server) const;
-
-
+		irc::Server getIrcServer(int server) const;
 		std::string getString(int count, ... ) const;
 		std::string getArray(int count, ... ) const;
 		void saveConfig() const;

@@ -3,12 +3,13 @@ CC=g++
 
 LIBS=-lpthread -ljansson
 
-OBJS=connection.o main.o
+OBJS=main.o main.o config.o
+IRC_OBJS=irc/connection.o irc/server.o
 TARGETS=bot
 
 all: $(TARGETS)
 
-bot: $(OBJS)
+bot: $(OBJS) $(IRC_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.cxx %.h Makefile debug.h
@@ -16,4 +17,4 @@ bot: $(OBJS)
 
 .PHONY: clean
 clean:
-	rm *.o $(TARGETS)
+	rm irc/*.o *.o $(TARGETS)

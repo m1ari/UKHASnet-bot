@@ -25,6 +25,8 @@ class Server {
 		void setUser(std::string username);
 		void setRealname(std::string name);
 		void setPass(std::string password);
+		void addChannel(std::string c);
+		void delChannel(std::string c);
 
 		std::string getName() const;
 		std::string getServer() const;
