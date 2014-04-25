@@ -1,4 +1,8 @@
 # IRC bot for UKHASnet Project
+This is an IRC Bot written in C++ aimed at being useful and easily
+extendable for the #ukhasnet irc channel on freenode.
+
+It is requested that you contact the author of the code if you find the code useful.
 
 ## Class List
 
