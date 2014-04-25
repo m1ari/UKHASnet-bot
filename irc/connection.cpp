@@ -99,6 +99,8 @@ namespace irc {
 			if (bytes>0){
 				buffer+=readbuff;
 			}
+			// TODO Handle bytes == 0 (Socket Closed)
+			// TODO Handle bytes < 0 (Error)
 			std::string line;
 			std::string::iterator pos;
 			while ((pos=std::find(buffer.begin(), buffer.end(), '\n')) != buffer.end()){
