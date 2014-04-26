@@ -3,6 +3,7 @@
 
 #include <jansson.h>
 #include <string>
+#include <list>
 #include "irc/server.h"
 
 namespace UKHASnet {
@@ -20,8 +21,8 @@ class Config {
 		void setFile(std::string file);
 		void loadConfig();
 
-		size_t getNumIrcServers() const;
-		irc::Server getIrcServer(int server) const;
+		std::list<std::string> getIRCServerList() const;
+		irc::Server getIrcServer(std::string server) const;
 		std::string getString(int count, ... ) const;
 		std::string getArray(int count, ... ) const;
 		void saveConfig() const;

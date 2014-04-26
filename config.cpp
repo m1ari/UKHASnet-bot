@@ -1,4 +1,6 @@
 #include <jansson.h>
+#include <list>
+#include <string>
 #include "config.h"
 #include "irc/server.h"
 
@@ -41,25 +43,29 @@ namespace UKHASnet {
 		}
 	}
 
-	size_t Config::getNumIrcServers() const {
+	std::list<std::string> Config::getIRCServerList() const {
 		json_t *obj=NULL;
-		int val=0;
+		json_t *val;
+		const char *key;
+		std::list<std::string> out;
 		if (json!=NULL){
 			obj=json_object_get(json,"irc");
-			if (json_is_array(obj)){
-				val=json_array_size(obj);
+			if (json_is_object(obj)){
+				json_object_foreach(obj,key,val){
+					out.push_back(key);
+				}
 			}
 		}
-		return val;
+		return out;
 	}
-	irc::Server Config::getIrcServer(int server) const {
+	irc::Server Config::getIrcServer(std::string server) const {
 		irc::Server s;
 		json_t *obj=NULL;
 		json_t *item=NULL;
 		if (json!=NULL){
 			obj=json_object_get(json,"irc");
-			if (json_is_array(obj)){
-				obj=json_array_get(obj,server);
+			if (json_is_object(obj)){
+				obj=json_object_get(obj,server.c_str());
 				if (json_is_object(obj)){
 					item=json_object_get(obj,"server");
 					if(json_is_string(item)){
@@ -86,8 +92,6 @@ namespace UKHASnet {
 					if(json_is_string(item)){
 						s.setPass(json_string_value(item));
 					}
-
-					//channels
 				}
 			}
 		}
