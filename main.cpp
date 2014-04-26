@@ -25,36 +25,38 @@ int main(int argc, char **argv){
 
 	for (std::list<std::string>::iterator it = ircServers.begin(); it != ircServers.end(); it++){
 		irc::Server s;
-		s=conf.getIrcServer(*it);
+		s=conf.getIRCServer(*it);
 		std::cout << "Got Server: " << s.getServer() << "(" << s.getNick() << "!" << s.getUser() << std::endl;
-		//ircConnections[*it]=new irc::Connection;
 		ircConnections[*it].setServer(s.getServer());
 		ircConnections[*it].setNick(s.getNick());
 		ircConnections[*it].setUser(s.getUser());
 		ircConnections[*it].connect();
+
+		std::list<std::string> channels;
+		channels=conf.getIRCChannels(*it);
+		for (std::list<std::string>::iterator it2 = channels.begin(); it2 != channels.end(); it2++){
+			std::cout << "Joining " << *it2 << std::endl;
+			ircConnections[*it].join(*it2);
+		}
 	}
+
+
 
 // map / set to store connections
 	//std::cout << "Server: " << conf.getString(2, "irc", "server") << std::endl;
 	//std::cout << "Channels: " << conf.getString(2, "irc", "channels") << std::endl;
 
-	//freenode.setServer("gateway.yapd.net");
-	//freenode.setNick("HasBot");
-	//freenode.setUser("HasBot");
-
-	//freenode.connect();
-
-	//sleep(5);
-	//freenode.join("#foo");
-	//sleep(5);
-	//freenode.part("#foo");
-	//sleep(5);
-	//freenode.join("#foo");
-	//sleep(5);
-	//freenode.part("#foo", "wibble");
-	sleep(5);
+	sleep(30);
 
 
+	for (std::list<std::string>::iterator it = ircServers.begin(); it != ircServers.end(); it++){
+		std::list<std::string> channels;
+		channels=conf.getIRCChannels(*it);
+		for (std::list<std::string>::iterator it2 = channels.begin(); it2 != channels.end(); it2++){
+			ircConnections[*it].part(*it2,"Who Killed me");
+		}
+		ircConnections[*it].disconnect();
+	}
 
 	/*
 	for (int i=0; i<600; i++){

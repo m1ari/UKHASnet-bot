@@ -43,6 +43,13 @@ namespace UKHASnet {
 		}
 	}
 
+	void Config::saveConfig() const{
+		// rename old config file
+		// open filename to save
+		// Dump json
+		// close file
+	}
+
 	std::list<std::string> Config::getIRCServerList() const {
 		json_t *obj=NULL;
 		json_t *val;
@@ -58,7 +65,7 @@ namespace UKHASnet {
 		}
 		return out;
 	}
-	irc::Server Config::getIrcServer(std::string server) const {
+	irc::Server Config::getIRCServer(std::string server) const {
 		irc::Server s;
 		json_t *obj=NULL;
 		json_t *item=NULL;
@@ -98,6 +105,29 @@ namespace UKHASnet {
 		return s;
 	}
 
+	std::list<std::string> Config::getIRCChannels(std::string server) const{
+		std::list<std::string> out;
+		json_t *obj;
+		size_t index;
+		json_t *val;
+
+		if (json!=NULL){
+			obj=json_object_get(json,"irc");
+			if (json_is_object(obj)){
+				obj=json_object_get(obj,server.c_str());
+				if (json_is_object(obj)){
+					obj=json_object_get(obj,"channels");
+					if(json_is_array(obj)){
+						json_array_foreach(obj,index,val){
+							out.push_back(json_string_value(val));
+						}
+					}
+				}
+			}
+		}
+		return out;
+	}
+
 	std::string Config::getString(int count, ... ) const {
 		json_t *obj=NULL;
 		std::string ret;
@@ -129,11 +159,4 @@ namespace UKHASnet {
 		//  "channels": ["#ukhasnet"]
 	}
 
-	void Config::saveConfig() const{
-		// rename old config file
-		// open filename to save
-		// Dump json
-		// close file
-
-	}
 }
