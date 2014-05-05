@@ -38,12 +38,15 @@ int main(int argc, char **argv){
 		std::cout << "Got Server: " << s.getServer() << "(" << s.getNick() << "!" << s.getUser() << std::endl;
 
 		// Create connection to server
+		// TODO Pass as irc::Server instead of seperate entities
 		ircConnections[*it].setServer(s.getServer());
 		ircConnections[*it].setNick(s.getNick());
 		ircConnections[*it].setUser(s.getUser());
-		ircConnections[*it].connect();
-		while (!ircConnections[*it].isConnected()){
-			sleep (1);
+		if (s.getConnect()==true){
+			ircConnections[*it].connect();
+			while (!ircConnections[*it].isConnected()){
+				sleep (1);
+			}
 		}
 
 		// Get list of channels for the server
