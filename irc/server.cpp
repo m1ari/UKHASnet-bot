@@ -36,6 +36,7 @@ namespace irc {
 		connect=c;
 	}
 
+/*
 	void Server::addChannel(std::string c){
 		channels.push_back(c);
 	}
@@ -46,6 +47,7 @@ namespace irc {
 			}
 		}
 	}
+*/
 
 	std::string Server::getName() const {
 		return name;
@@ -71,12 +73,14 @@ namespace irc {
 	bool Server::getConnect() const {
 		return connect;
 	}
-	
+
+/*
 	size_t Server::getNumChannels() const {
 		return channels.size();
 	}
 	std::string Server::getChannel(int n) const {
 		return channels.at(n);
 	}
+*/
 }
 }

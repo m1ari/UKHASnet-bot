@@ -33,8 +33,8 @@ class Server {
 		void setLog(bool log);
 		void setConnect(bool connect);
 
-		void addChannel(std::string c);
-		void delChannel(std::string c);
+		//void addChannel(std::string c);
+		//void delChannel(std::string c);
 
 
 		std::string getName() const;
@@ -46,8 +46,8 @@ class Server {
 		bool getLog() const;
 		bool getConnect() const;
 
-		size_t getNumChannels() const;
-		std::string getChannel(int n) const;
+		//size_t getNumChannels() const;
+		//std::string getChannel(int n) const;
 
 	protected:
 
