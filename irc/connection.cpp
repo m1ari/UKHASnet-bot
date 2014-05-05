@@ -27,15 +27,14 @@ namespace irc {
 	};
 
 	void Connection::connect(){
-
 		if (run == true){
-			fprintf(stderr,"Already connected to server");
-			//return -1;
+			fprintf(stderr,"Error(irc::Connection): Already connected to server");
+			return;
 		}
 
-		// Check stuff is set
-		run=true;
+		//TODO Check minimal requirements are set (do we have any if the loop also tests)
 
+		run=true;
 		pthread_create(&threadid,NULL,&Connection::entryPoint,this);
 	}
 	void* Connection::entryPoint(void *pthis){
@@ -45,17 +44,21 @@ namespace irc {
 	}
 
 	void Connection::mainLoop(){
+		// TODO we should check required variables are set, if not cylce around until they are.
+		//		As minimum we need to know Server, User and Nick
+		// TODO We need to handle server disconnects and bad addresses in the list from gethostbyname
+
 		struct sockaddr_in dest;
 		struct hostent *he;
 	
 		if ((sockfd = socket(AF_INET,SOCK_STREAM, 0)) < 0 ){
-			perror("Socket Error");
-			//return -1;
+			perror("Error(irc::Connection)");
+			return;
 		}
 
-		if ((he=gethostbyname(server.c_str())) == NULL ) {
-			puts("Unable to lookup hostname");
-			//return -1;
+		if ((he=gethostbyname(s.getServer().c_str())) == NULL ) {
+			perror("Error(irc::Connection)");
+			return;
 		}
 
 		memset(&dest, 0, sizeof(dest));
@@ -69,8 +72,8 @@ namespace irc {
 		inet_ntop(AF_INET,&dest.sin_addr,ip,sizeof(ip));
 		printf("Connecting to %s:%d\n",ip,ntohs(dest.sin_port));
 		if (::connect(sockfd, (struct sockaddr *)&dest, sizeof(dest))<0){
-			perror("Connet Error");
-			//return (1);
+			perror("Error(irc::Connection)");
+			return;
 		}
 
 		// set socket to non blocking
@@ -78,8 +81,8 @@ namespace irc {
 		tv.tv_sec = 0;
 		tv.tv_usec = 100 * 1000;
 		if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
-			perror("Timeout");
-			//exit(1);
+			perror("Error(irc::Connection)");
+			return;
 		}
 
 		printf("Connected \n");
@@ -103,22 +106,30 @@ namespace irc {
 
 		// We could probably do these better using https://tools.ietf.org/html/rfc2812#section-2.3.1
 		if ( (r=regcomp(&r_privmsg, ":([^!]+)!([^@]+)@([^ ]+) PRIVMSG (.*) :(.*)", REG_EXTENDED)) != 0){
-			std::cout << "Error compiling regex(PRIVMSG): " << r << std::endl;
-		}
-		if ( (r=regcomp(&r_join, ":([^!]+)!([^@]+)@([^ ]+) JOIN :(.*)", REG_EXTENDED)) != 0){
-			std::cout << "Error compiling regex(JOIN): " << r << std::endl;
-		}
-		if ( (r=regcomp(&r_part, ":([^!]+)!([^@]+)@([^ ]+) PART (.*) :(.*)", REG_EXTENDED)) != 0){
-			std::cout << "Error compiling regex(PART): " << r << std::endl;
-		}
-		if ( (r=regcomp(&r_numeric, ":([a-zA-Z0-9\\.]+) ([0-9]+) (.*)", REG_EXTENDED)) != 0){
-			std::cout << "Error compiling regex(Numeric): " << r << std::endl;
 			char buffer[100];
 			regerror(r,&r_numeric,buffer,100);
-			std::cout << "Message: " << buffer << std::endl;
+			fprintf(stderr, "Error: Compiling PRIVMSG Regex(%d):\n\t%s\n", r, buffer);
+			return;
+		}
+		if ( (r=regcomp(&r_join, ":([^!]+)!([^@]+)@([^ ]+) JOIN :(.*)", REG_EXTENDED)) != 0){
+			char buffer[100];
+			regerror(r,&r_numeric,buffer,100);
+			fprintf(stderr, "Error: Compiling JOIN Regex(%d):\n\t%s\n", r, buffer);
+			return;
+		}
+		if ( (r=regcomp(&r_part, ":([^!]+)!([^@]+)@([^ ]+) PART (.*) :(.*)", REG_EXTENDED)) != 0){
+			char buffer[100];
+			regerror(r,&r_numeric,buffer,100);
+			fprintf(stderr, "Error: Compiling PART Regex(%d):\n\t%s\n", r, buffer);
+			return;
+		}
+		if ( (r=regcomp(&r_numeric, ":([a-zA-Z0-9\\.]+) ([0-9]+) (.*)", REG_EXTENDED)) != 0){
+			char buffer[100];
+			regerror(r,&r_numeric,buffer,100);
+			fprintf(stderr, "Error: Compiling Numeric Regex(%d):\n\t%s\n", r, buffer);
+			return;
 		}
 
-		//Handler h = new Handler(this);
 		Handler h(this);
 		while (run){
 			memset(readbuff,0,513);
@@ -214,14 +225,14 @@ namespace irc {
 
 	void Connection::sendNick(){
 		char buffer[101];
-		snprintf(buffer,101,"NICK %s\r\n",nick.c_str());
+		snprintf(buffer,101,"NICK %s\r\n",s.getNick().c_str());
 		sendBuffer(buffer, strlen(buffer));
 	}
 
 	void Connection::sendUser(){
 		char buffer[101];
 		// TODO Test username and realname are set to something sensible
-		snprintf(buffer,101,"USER %s %d * : %s\r\n",username.c_str(),8,realname.c_str());
+		snprintf(buffer,101,"USER %s %d * : %s\r\n",s.getUser().c_str(),8,s.getRealname().c_str());
 		sendBuffer(buffer, strlen(buffer));
 	}
 
@@ -251,25 +262,37 @@ namespace irc {
 	void Connection::sendMsg(std::string dest, std::string msg){
 	}
 
-	void Connection::setServer(std::string in){
-		// TODO Test if we're connected
-		server=in;
+	void Connection::setServer(Server in){
+		if (connected == false){
+			s=in;
+		} else {
+			fprintf(stderr, "Error(irc::Connection): Can only set Server when not connected\n");
+		}
 	}
 
-	void Connection::setNick(std::string in){
-		// TODO test is we're connected
+	void Connection::setServer(std::string in){
 		if (connected == false){
-			nick=in;
+			s.setServer(in);
+			s.setName(in);
+
 		} else {
-			nick=in;
+			fprintf(stderr, "Error(irc::Connection): Can only set Server when not connected\n");
+		}
+	}
+	void Connection::setNick(std::string in){
+		if (connected == false){
+			s.setNick(in);
+		} else {
+			s.setNick(in);
 			sendNick();
 		}
 	}
 
 	void Connection::setUser(std::string in){
 		if (connected == false){
-			username=in;
+			s.setUser(in);
 		} else {
+			fprintf(stderr, "Error(irc::Connection): Can only set user when not connected\n");
 		}
 	}
 
@@ -282,10 +305,6 @@ namespace irc {
 			sendJoin(channel);
 		}
 	}
-
-	//void Connection::part(std::string channel ){
-		//part(channel,"");
-	//}
 
 	void Connection::part(std::string channel, std::string msg){
 		// TODO remove from the list of channels

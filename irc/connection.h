@@ -2,6 +2,7 @@
 #define irc_connection_h_
 
 #include <string>
+#include "server.h"
 
 namespace UKHASnet {
 namespace irc {
@@ -12,17 +13,11 @@ class Connection {
 		bool run;
 		bool connected;
 		int sockfd;
-		std::string server;
-		std::string nick;
-		std::string username;
-		std::string realname;
-		std::string password;
+		Server s;
 
 		//FILE logfd;
 		//bool serverlog;
 		//time_t
-		// list of channels
-		//std::queue<std::string> messages;	// Change to class that helps parse data and keep state
 
 		static void* entryPoint(void *pthis);
 		void mainLoop();
@@ -36,6 +31,7 @@ class Connection {
 	public:
 		Connection();
 		~Connection();
+		void setServer(Server s);
 		void setServer(std::string in);
 		void setNick(std::string in);
 		void setUser(std::string in);
