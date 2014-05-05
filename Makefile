@@ -6,8 +6,7 @@ CC=g++
 LIBS=-lpthread -ljansson
 
 OBJS=main.o config.o handler.o
-IRC_OBJS=irc/connection.o irc/server.o irc/message.o
-# irc/member.o irc/channel.o
+IRC_OBJS=irc/connection.o irc/server.o irc/message.o irc/member.o irc/channel.o
 TARGETS=bot
 
 all: $(TARGETS)
