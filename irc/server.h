@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+// #include "channel.h"
 
 namespace UKHASnet {
 namespace irc {
@@ -18,7 +19,7 @@ class Server {
 		bool log;
 		bool connect;
 
-		std::vector<std::string> channels;
+		//std::vector<Channel> channels;
 
 	public:
 		Server();
@@ -33,10 +34,6 @@ class Server {
 		void setLog(bool log);
 		void setConnect(bool connect);
 
-		//void addChannel(std::string c);
-		//void delChannel(std::string c);
-
-
 		std::string getName() const;
 		std::string getServer() const;
 		std::string getNick() const;
@@ -46,8 +43,11 @@ class Server {
 		bool getLog() const;
 		bool getConnect() const;
 
+		//void addChannel(Channel c);
+		//void delChannel(Channel c);
 		//size_t getNumChannels() const;
-		//std::string getChannel(int n) const;
+		//Channel getChannel(int n) const;
+		//bool isChannel(std::string c) const;
 
 	protected:
 

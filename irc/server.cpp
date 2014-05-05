@@ -1,4 +1,5 @@
 #include "server.h"
+#include "channel.h"
 
 namespace UKHASnet {
 namespace irc {
@@ -36,18 +37,6 @@ namespace irc {
 		connect=c;
 	}
 
-/*
-	void Server::addChannel(std::string c){
-		channels.push_back(c);
-	}
-	void Server::delChannel(std::string c){
-		for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); it++){
-			if (c == *it){
-				channels.erase(it);
-			}
-		}
-	}
-*/
 
 	std::string Server::getName() const {
 		return name;
@@ -75,11 +64,23 @@ namespace irc {
 	}
 
 /*
+	void Server::addChannel(Channel c){
+		channels.push_back(c);
+	}
+	void Server::delChannel(Channel c){
+		for (std::vector<Channel>::iterator it = channels.begin(); it != channels.end(); it++){
+			if (c == *it){
+				channels.erase(it);
+			}
+		}
+	}
 	size_t Server::getNumChannels() const {
 		return channels.size();
 	}
-	std::string Server::getChannel(int n) const {
+	Channel Server::getChannel(int n) const {
 		return channels.at(n);
+	}
+	bool Server::isChannel(std::string s) const {
 	}
 */
 }
