@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
+//#include <regex>	// C++11
+#include <regex.h>
 #include <typeinfo>
 #include <pthread.h>
 #include <netinet/in.h>
@@ -23,11 +25,11 @@ namespace irc {
 	Connection::~Connection() {
 	};
 
-	int Connection::connect(){
+	void Connection::connect(){
 
 		if (run == true){
 			fprintf(stderr,"Already connected to server");
-			return -1;
+			//return -1;
 		}
 
 		// Check stuff is set
@@ -85,13 +87,35 @@ namespace irc {
 		//sendPassword();
 		// TODO Join Channels in Channel list
 
-		unsigned int counter=0;
+		//unsigned int counter=0;
 
 		std::string buffer;	// Buffer to work with
 		char readbuff[513];	// read Buffer	(max line is 512)
 		int bytes;		// Number of bytes read
 
-		connected=true;
+
+		// With C++11 we could use stl::regex instead
+		regex_t r_privmsg, r_join, r_part, r_numeric;
+		const int n_matches=5;
+		int r;
+		regmatch_t matches[n_matches];
+
+		// We could probably do these better using https://tools.ietf.org/html/rfc2812#section-2.3.1
+		if ( (r=regcomp(&r_privmsg, ":([^!]+)!([^@]+)@([^ ]+) PRIVMSG (.*) :(.*)", REG_EXTENDED)) != 0){
+			std::cout << "Error compiling regex(PRIVMSG): " << r << std::endl;
+		}
+		if ( (r=regcomp(&r_join, ":([^!]+)!([^@]+)@([^ ]+) JOIN :(.*)", REG_EXTENDED)) != 0){
+			std::cout << "Error compiling regex(JOIN): " << r << std::endl;
+		}
+		if ( (r=regcomp(&r_part, ":([^!]+)!([^@]+)@([^ ]+) PART (.*) :(.*)", REG_EXTENDED)) != 0){
+			std::cout << "Error compiling regex(PART): " << r << std::endl;
+		}
+		if ( (r=regcomp(&r_numeric, ":([a-zA-Z0-9\\.]+) ([0-9]+) (.*)", REG_EXTENDED)) != 0){
+			std::cout << "Error compiling regex(Numeric): " << r << std::endl;
+			char buffer[100];
+			regerror(r,&r_numeric,buffer,100);
+			std::cout << "Message: " << buffer << std::endl;
+		}
 
 		while (run){
 			memset(readbuff,0,513);
@@ -103,27 +127,60 @@ namespace irc {
 			// TODO Handle bytes < 0 (Error)
 			std::string line;
 			std::string::iterator pos;
+
+			
 			while ((pos=std::find(buffer.begin(), buffer.end(), '\n')) != buffer.end()){
 				line   = std::string(buffer.begin(),pos);
 				buffer = std::string(pos+1, buffer.end());
 
 				if (line.find("PING") == 0){
 					sendPong(line);
-				} else {
-					std::cout << "Line: " << line << std::endl;
-					// Message in Channel
-					// Line: :mfa298!~mfa298@gateway.yapd.net PRIVMSG #foo :bar
-					// Private Message
-					// Line: :mfa298!~mfa298@gateway.yapd.net PRIVMSG HasBot :foobar
-					//
-					// Join Channel
-					// Line: :HasBot!~HasBot@gateway.yapd.net JOIN :#foo
+				} else if ((r=regexec(&r_privmsg, line.c_str(), n_matches, matches,0)) == 0) {
+					std::cout << "PRIVMSG: " << line << std::endl;
+					// Channel : :mfa298!~mfa298@gateway.yapd.net PRIVMSG #foo :bar
+					// Private : :mfa298!~mfa298@gateway.yapd.net PRIVMSG HasBot :foobar
+				} else if ((r=regexec(&r_join, line.c_str(), n_matches, matches,0)) == 0) {
+					std::cout << "JOIN: " << line << std::endl;
+					// Us    : :HasBot!~HasBot@gateway.yapd.net JOIN :#foo
+					// Other : :mfa298!~mfa298@gateway.yapd.net JOIN :#bar
+					// Freeno: :ukhasnet!~HasBot@gateway.yapd.net JOIN #ukhasnet-test
+
+				} else if ((r=regexec(&r_part, line.c_str(), n_matches, matches,0)) == 0) {
+					std::cout << "PART: " << line << std::endl;
+					// Us      : :HasBot!~HasBot@gateway.yapd.net PART #foo :HasBot
+					// Us (msg): :HasBot!~HasBot@gateway.yapd.net PART #foo : wibble
+					// Other   : :mfa298!~mfa298@gateway.yapd.net PART #bar :mfa298
+				} else if ((r=regexec(&r_numeric, line.c_str(), n_matches, matches,0)) == 0) {
+					std::string tmp=line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so);
+					int num;
+					num=strtol(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so).c_str(), NULL, 10);
+					switch (num) {
+						case 1:		// RPL_WELCOME
+							connected=true;
+						case 2:		// RPL_YOURHOST
+						case 3:		// RPL_CREATED
+						case 4:		// RPL_MYINFO
+						case 5:		// RPL_BOUNCE
+						break;
+
+						case 375:	// RPL_MOTDSTART
+						case 372:	// RPL_MOTD
+						case 376:	// RPL_ENDOFMOTD
+							// MOTD - Do Nothing
+						break;
+						default:
+							std::cout << "NUM(" << num << "): " << line << std::endl;
+						break;
+					}
+					// Join Channel (additional)
 					// Line: :gateway.yapd.net 353 HasBot = #foo :HasBot @mfa298
 					// Line: :gateway.yapd.net 366 HasBot #foo :End of NAMES list
-					//
-					// Leave Channel (with message)
-					// Line: :HasBot!~HasBot@gateway.yapd.net PART #foo :HasBot
-					// Line: :HasBot!~HasBot@gateway.yapd.net PART #foo : wibble
+				} else {
+					std::cout << "Line: " << line << std::endl;
+
+
+					// Notice
+
 				}
 			}
 			// TODO handle server disconnecting
@@ -225,6 +282,10 @@ namespace irc {
 		// TODO remove from the list of channels
 		sendPart(channel, msg);
 
+	}
+
+	bool Connection::isConnected() const{
+		return connected;
 	}
 }
 }

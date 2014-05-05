@@ -1,5 +1,5 @@
-#ifndef connection_h_
-#define connection_h_
+#ifndef irc_connection_h_
+#define irc_connection_h_
 
 #include <string>
 
@@ -18,6 +18,7 @@ class Connection {
 		std::string realname;
 		std::string password;
 		// list of channels
+		//std::queue<std::string> messages;	// Change to class that helps parse data and keep state
 
 		static void* entryPoint(void *pthis);
 		void mainLoop();
@@ -35,10 +36,11 @@ class Connection {
 		void setNick(std::string in);
 		void setUser(std::string in);
 		void setPassword(std::string in);
-		int connect();				// Starts new thread
+		void connect();				// Starts new thread
 		void disconnect();			// Stops thread and disconnects from server
 		void join(std::string channel);		// Join Channel
 		void part(std::string channel, std::string msg="");	// Leave Channel
+		bool isConnected() const;		// Are we currently connected to the server
 	protected:
 
 };
