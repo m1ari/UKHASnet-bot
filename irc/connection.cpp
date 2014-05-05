@@ -5,6 +5,8 @@
 #include <cstdio>
 //#include <regex>	// C++11
 #include <regex.h>
+#include <ctime>
+#include <sys/time.h>
 #include <typeinfo>
 #include <pthread.h>
 #include <netinet/in.h>
@@ -22,6 +24,8 @@ namespace irc {
 	Connection::Connection() {
 		run=false;
 		connected=false;
+		logfd=NULL;
+		logtime=0;
 	};
 	Connection::~Connection() {
 	};
@@ -86,6 +90,7 @@ namespace irc {
 		}
 
 		printf("Connected \n");
+
 		sendNick();
 		sendUser();
 		//sendPassword();
@@ -123,7 +128,7 @@ namespace irc {
 			fprintf(stderr, "Error: Compiling PART Regex(%d):\n\t%s\n", r, buffer);
 			return;
 		}
-		if ( (r=regcomp(&r_numeric, ":([a-zA-Z0-9\\.]+) ([0-9]+) (.*)", REG_EXTENDED)) != 0){
+		if ( (r=regcomp(&r_numeric, ":([a-zA-Z0-9\\.]+) ([0-9]+) ([^ ]+) (.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
 			regerror(r,&r_numeric,buffer,100);
 			fprintf(stderr, "Error: Compiling Numeric Regex(%d):\n\t%s\n", r, buffer);
@@ -146,6 +151,7 @@ namespace irc {
 			while ((pos=std::find(buffer.begin(), buffer.end(), '\n')) != buffer.end()){
 				line   = std::string(buffer.begin(),pos);
 				buffer = std::string(pos+1, buffer.end());
+				writeLog("RX", line);
 
 				if (line.find("PING") == 0){
 					sendPong(line);
@@ -165,13 +171,20 @@ namespace irc {
 					// Us    : :HasBot!~HasBot@gateway.yapd.net JOIN :#foo
 					// Other : :mfa298!~mfa298@gateway.yapd.net JOIN :#bar
 					// Freeno: :ukhasnet!~HasBot@gateway.yapd.net JOIN #ukhasnet-test
+					// channel.member.add / state joined
 
 				} else if ((r=regexec(&r_part, line.c_str(), n_matches, matches,0)) == 0) {
 					std::cout << "PART: " << line << std::endl;
 					// Us      : :HasBot!~HasBot@gateway.yapd.net PART #foo :HasBot
 					// Us (msg): :HasBot!~HasBot@gateway.yapd.net PART #foo : wibble
 					// Other   : :mfa298!~mfa298@gateway.yapd.net PART #bar :mfa298
+					// channel.member.state - left
 				} else if ((r=regexec(&r_numeric, line.c_str(), n_matches, matches,0)) == 0) {
+					// RFC Section 2.4 (Format) & 5 (list)
+					// 1 Sender Prefix
+					// 2 Numeric ID
+					// 3 Target
+					// 4 Message
 					int num=strtol(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so).c_str(), NULL, 10);
 					switch (num) {
 						case 1:		// RPL_WELCOME
@@ -183,6 +196,14 @@ namespace irc {
 						case 5:		// RPL_BOUNCE
 						break;
 
+						case 353:	// RPL_NAMREPLY
+							// :gateway.yapd.net 353 HasBot = #foo :HasBot @mfa298
+							// <[=*@]> <channel> :<[@+]nick> ...
+							// TODO Cycle through Nicks and add to channel
+						break;
+						case 366:	// RPL_ENDOFNAMES
+							// :gateway.yapd.net 366 HasBot #foo :End of NAMES list
+						break;
 						case 375:	// RPL_MOTDSTART
 						case 372:	// RPL_MOTD
 						case 376:	// RPL_ENDOFMOTD
@@ -193,8 +214,6 @@ namespace irc {
 						break;
 					}
 					// Join Channel (additional)
-					// Line: :gateway.yapd.net 353 HasBot = #foo :HasBot @mfa298
-					// Line: :gateway.yapd.net 366 HasBot #foo :End of NAMES list
 				} else {
 					std::cout << "Line: " << line << std::endl;
 
@@ -209,7 +228,50 @@ namespace irc {
 		connected=false;
 	}
 
+	void Connection::writeLog(std::string type, std::string msg){
+		// TODO should only run if server is set to log
+		char buff[100];
+		struct timeval now;
+		if ( gettimeofday(&now,NULL) <0 ){
+			perror("irc::Connection");
+			return;
+		}
+
+		struct tm tm_now, tm_log;
+		gmtime_r(&now.tv_sec,&tm_now);
+		gmtime_r(&logtime,&tm_log);
+
+		if ((tm_now.tm_year != tm_log.tm_year) || (tm_now.tm_yday != tm_log.tm_yday) ){
+			if (logfd != NULL){
+				strftime(buff,100,"<%F>-<%T>",&tm_now);
+				fprintf(logfd, "===== Closing Log %s =====\n",buff);
+				fclose(logfd);
+				logfd=NULL;	// Do we need to do this ??
+			}
+
+			if (logfd == NULL){
+				snprintf(buff,100,"log/%s-%04d-%02d-%02d.log", s.getName().c_str(), (tm_now.tm_year+1900), (tm_now.tm_mon+1), tm_now.tm_mday);
+
+				logfd=fopen(buff, "a");
+				if (logfd==NULL){
+					perror("irc::Connection");
+					return;
+				}
+				logtime=now.tv_sec;
+				strftime(buff,100,"<%F>-<%T>",&tm_now);
+				fprintf(logfd, "===== Opening Log %s =====\n",buff);
+			}
+		}
+
+		strftime(buff,100,"%T",&tm_now);
+		// TODO now.tv_usec isn't limited to 3 digits as it's an integer...
+		fprintf(logfd, "[%02d:%02d:%02d.%03ld] %s: %s\n", tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec, now.tv_usec, type.c_str(), msg.c_str());
+
+		fflush(logfd);
+	}
+
 	void Connection::sendBuffer(const char* buf, size_t length){
+		writeLog("TX", buf);
 		send(sockfd, buf, length, 0);
 
 	}
@@ -301,6 +363,7 @@ namespace irc {
 
 	void Connection::join(std::string channel){
 		// TODO add channel to list of channels
+		// s.addChannel(Channel(channel));
 		if (connected == true){
 			sendJoin(channel);
 		}
@@ -308,8 +371,8 @@ namespace irc {
 
 	void Connection::part(std::string channel, std::string msg){
 		// TODO remove from the list of channels
+		// s.delChannel(Channel(channel));
 		sendPart(channel, msg);
-
 	}
 
 	bool Connection::isConnected() const{

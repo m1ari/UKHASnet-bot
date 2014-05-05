@@ -2,6 +2,7 @@
 #define irc_connection_h_
 
 #include <string>
+#include <ctime>
 #include "server.h"
 
 namespace UKHASnet {
@@ -15,12 +16,13 @@ class Connection {
 		int sockfd;
 		Server s;
 
-		//FILE logfd;
-		//bool serverlog;
-		//time_t
+		// TODO Add file logging
+		FILE *logfd;
+		time_t logtime;
 
 		static void* entryPoint(void *pthis);
 		void mainLoop();
+		void writeLog(std::string type, std::string msg);
 		void sendBuffer(const char* buf, size_t length);
 		void sendNick();
 		void sendUser();
