@@ -33,7 +33,7 @@ class Config {
 		//void delIRCChannel(std::string server, std::string channel);
 
 		std::string getString(int count, ... ) const;
-		std::string getArray(int count, ... ) const;
+		//std::string getArray(int count, ... ) const;
 
 	protected:
 

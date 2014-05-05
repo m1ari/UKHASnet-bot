@@ -155,8 +155,8 @@ namespace UKHASnet {
 
 		return ret;
 	}
-	std::string Config::getArray(int count, ... ) const {
+	//std::string Config::getArray(int count, ... ) const {
 		//  "channels": ["#ukhasnet"]
-	}
+	//}
 
 }
