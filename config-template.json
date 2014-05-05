@@ -1,0 +1,18 @@
+{
+	"irc": {
+		"network1": {
+			"server": "hostname.network1",
+			"nick": "ircbot", 
+			"username": "ircbot",
+			"realname": "ircbot",
+			"channels": ["#foo", "#bar"]
+		},
+		"network2": {
+			"server": "hostname.network2",
+			"nick": "ircbot", 
+			"username": "ircbot",
+			"realname": "ircbot",
+			"channels": ["#baz"]
+		}
+	}
+}
