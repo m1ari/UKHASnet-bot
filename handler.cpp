@@ -63,6 +63,13 @@ namespace UKHASnet {
 					std::cout << "Handler: Got Node request" << std::endl;
 				} else if (msg.getText().find("!follow") == 0){
 					std::cout << "Handler: Got Follow request" << std::endl;
+				} else if (msg.getText().find("!admin") == 0){
+					std::cout << "Handler: Got Admin request" << std::endl;
+					// Todo Check authorised user (from config ??)
+					// Get 2nd keyword
+					// listserv	(lists known servers and state)
+					// connect <serv>
+					// disco <serv>
 				} else {
 					std::cout << "Handler: Processing " << msg.getNick() << ": " << msg.getText() << std::endl;
 				}
