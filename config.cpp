@@ -74,9 +74,10 @@ namespace UKHASnet {
 			if (json_is_object(obj)){
 				obj=json_object_get(obj,server.c_str());
 				if (json_is_object(obj)){
+					s.setName(server);
+
 					item=json_object_get(obj,"server");
 					if(json_is_string(item)){
-						s.setName(json_string_value(item));
 						s.setServer(json_string_value(item));
 					}
 
@@ -98,6 +99,24 @@ namespace UKHASnet {
 					item=json_object_get(obj,"password");
 					if(json_is_string(item)){
 						s.setPass(json_string_value(item));
+					}
+
+					item=json_object_get(obj,"log");
+					if(json_is_boolean(item)){
+						if (json_is_true(item)){
+							s.setLog(true);
+						} else {
+							s.setLog(false);
+						}
+					}
+
+					item=json_object_get(obj,"connect");
+					if(json_is_boolean(item)){
+						if (json_is_true(item)){
+							s.setConnect(true);
+						} else {
+							s.setConnect(false);
+						}
 					}
 				}
 			}

@@ -9,7 +9,7 @@ namespace irc {
 
 class Server {
 	private:
-		std::string name;
+		std::string name;	// Name of encompassing object
 		std::string hostname;
 		std::string nick;
 		std::string username;
@@ -17,6 +17,7 @@ class Server {
 		std::string password;
 		bool log;
 		bool connect;
+
 		std::vector<std::string> channels;
 
 	public:
@@ -29,6 +30,9 @@ class Server {
 		void setUser(std::string username);
 		void setRealname(std::string name);
 		void setPass(std::string password);
+		void setLog(bool log);
+		void setConnect(bool connect);
+
 		void addChannel(std::string c);
 		void delChannel(std::string c);
 
@@ -39,6 +43,9 @@ class Server {
 		std::string getUser() const;
 		std::string getRealname() const;
 		std::string getPass() const;
+		bool getLog() const;
+		bool getConnect() const;
+
 		size_t getNumChannels() const;
 		std::string getChannel(int n) const;
 

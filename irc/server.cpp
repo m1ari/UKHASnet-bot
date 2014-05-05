@@ -14,26 +14,28 @@ namespace irc {
 	void Server::setName(std::string n){
 		name=n;
 	}
-
 	void Server::setServer(std::string s){
 		hostname=s;
 	}
-
 	void Server::setNick(std::string n){
 		nick=n;
 	}
-
 	void Server::setUser(std::string u){
 		username=u;
 	}
-
 	void Server::setRealname(std::string n){
 		realname=n;
 	}
-
 	void Server::setPass(std::string p){
 		password=p;
 	}
+	void Server::setLog(bool l){
+		log=l;
+	}
+	void Server::setConnect(bool c){
+		connect=c;
+	}
+
 	void Server::addChannel(std::string c){
 		channels.push_back(c);
 	}
@@ -63,11 +65,16 @@ namespace irc {
 	std::string Server::getPass() const {
 		return password;
 	}
+	bool Server::getLog() const {
+		return log;
+	}
+	bool Server::getConnect() const {
+		return connect;
+	}
 	
 	size_t Server::getNumChannels() const {
 		return channels.size();
 	}
-
 	std::string Server::getChannel(int n) const {
 		return channels.at(n);
 	}
