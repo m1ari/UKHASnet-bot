@@ -6,47 +6,64 @@ It is requested that you contact the author of the code if you find the code use
 
 ## Class List
 
-### Connection Class
+### UKHASnet Namespace
+This is the parent namespace for all classes used in this code.
+
+#### Config Class
+Reads in the configuration from config.json (see template for current format).
+
+Future extensions will all the config to be modified whilst running and save that config back out.
+
+#### Handler Class
+Thread started from the main processes. Each process also connects to the Handler to pass it messages
+Handler() should only be called once and can be used to start the thread.
+Handler(irc::connection*) should be called by each connection thread to send messages to the handler
+
+Planned commands
+PRIVMSG/NOTICE are all logged (!h will add a hidden flag on the DB version
+Also log other things (JOIN/PART/NICK/QUIT/MODE) ?
+
+!seen <nick>
+	When was a nickname last seen
+!node <Node ID>
+	Provides info about a node
+!follow <Node ID>
+
+Ideally in Future it should be possible to add the actual handlers to this class programatically
+
+#### main
+Not a class as such, but the main process for the bot.
+
+### UKHASnet::irc namespace
+This namespace handles all the IRC specific parts
+
+#### Connection Class
 Handles connection to server
-Creates own thread
+Creates a thread per server to handle communications
 
-### Config Class
-Handles reading the config file and making the config values available.
-
-
-### Message Class
+#### Message Class
 Used to store mesasges to and from the server
 
 
-### Queue Handler Class
-Handles incomming messages
-Threaded
+#### Server Class
+Used to store details about a server
 
-### Database Class ??
+
+
+
+
+
+### TODO / Delete from local source ...
+#### Channel Class
+Not currently used
+
+#### Member Class
+Not Currently used
+
+#### Database Class ??
 Handles connection to DB
 
-### Handler Class
-Base class for handling commands
-need mothod to register command with main handler
-lookup table to match command to Handler
-	subclasses need to specify
-		if they should always be run (Logger)
-		which types of user they should run for (ignore lines from the bot)
-
-
-
-### Logger Class	(extends Handler ?)
-Logs messages to the DB
-
-### Seen Class
-Responds to !seen
-Records last time a nick was seen
-
-### Node class
-Responds to !node
-Commands:
-	status
-	last packet
+#### Classes for Handlers (seen,follow,nodes)
 
 ## Ubuntu Installation
 sudo apt-get install g++
