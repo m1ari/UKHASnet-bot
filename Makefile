@@ -6,7 +6,8 @@ CC=g++
 LIBS=-lpthread -ljansson
 
 OBJS=main.o config.o handler.o
-IRC_OBJS=irc/connection.o irc/server.o irc/channel.o irc/member.o irc/message.o
+IRC_OBJS=irc/connection.o irc/server.o irc/message.o
+# irc/member.o irc/channel.o
 TARGETS=bot
 
 all: $(TARGETS)
@@ -20,8 +21,6 @@ $(IRC_OBJS): %.o: %.cpp %.h Makefile
 $(OBJS): %.o: %.cpp %.h Makefile
 	$(CXX) -c $(CFLAGS) -o $@ $<
 
-## %.o: %.cpp %.h Makefile debug.h
-##	$(CXX) -c $(CFLAGS) -o $@ $<
 
 .PHONY: clean
 clean:
