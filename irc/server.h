@@ -2,6 +2,7 @@
 #define irc_server_h_
 
 #include <string>
+#include <vector>
 
 namespace UKHASnet {
 namespace irc {
@@ -14,6 +15,9 @@ class Server {
 		std::string username;
 		std::string realname;
 		std::string password;
+		bool log;
+		bool connect;
+		std::vector<std::string> channels;
 
 	public:
 		Server();
@@ -28,12 +32,15 @@ class Server {
 		void addChannel(std::string c);
 		void delChannel(std::string c);
 
+
 		std::string getName() const;
 		std::string getServer() const;
 		std::string getNick() const;
 		std::string getUser() const;
 		std::string getRealname() const;
 		std::string getPass() const;
+		size_t getNumChannels() const;
+		std::string getChannel(int n) const;
 
 	protected:
 

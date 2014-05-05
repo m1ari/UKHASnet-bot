@@ -4,6 +4,8 @@ namespace UKHASnet {
 namespace irc {
 
 	Server::Server(){
+		log=false;
+		connect=true;
 	}
 
 	Server::~Server(){
@@ -33,8 +35,14 @@ namespace irc {
 		password=p;
 	}
 	void Server::addChannel(std::string c){
+		channels.push_back(c);
 	}
 	void Server::delChannel(std::string c){
+		for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); it++){
+			if (c == *it){
+				channels.erase(it);
+			}
+		}
 	}
 
 	std::string Server::getName() const {
@@ -56,5 +64,12 @@ namespace irc {
 		return password;
 	}
 	
+	size_t Server::getNumChannels() const {
+		return channels.size();
+	}
+
+	std::string Server::getChannel(int n) const {
+		return channels.at(n);
+	}
 }
 }
