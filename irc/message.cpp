@@ -8,5 +8,53 @@ namespace irc {
 
 	Message::~Message(){
 	}
+
+	bool Message::hasServer() const {
+		if (server==NULL){
+			return false;
+		} else {
+			return true;
+		}
+	}
+	void Message::setServer(void *s){
+		server=(irc::Connection *)s;
+	}
+
+	void* Message::getServer() const {
+		return server;
+	}
+
+	void Message::setNick(std::string in){
+		nick=in;
+	}
+	void Message::setUser(std::string in){
+		user=in;
+	}
+	void Message::setHost(std::string in){
+		host=in;
+	}
+	void Message::setDest(std::string in){
+		dest=in;
+	}
+	void Message::setText(std::string in){
+		text=in;
+	}
+
+	std::string Message::getNick() const{
+		return nick;
+	}
+	std::string Message::getUser() const{
+		return user;
+	}
+	std::string Message::getHost() const{
+		return host;
+	}
+	std::string Message::getDest() const{
+		return dest;
+	}
+	std::string Message::getText() const{
+		return text;
+	}
+
 }
 }
