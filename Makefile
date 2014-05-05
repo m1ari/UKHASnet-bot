@@ -1,10 +1,12 @@
 CFLAGS=-O2 -g -Wall
+#  -std=gnu++11 
+
 CC=g++
 
 LIBS=-lpthread -ljansson
 
-OBJS=main.o main.o config.o
-IRC_OBJS=irc/connection.o irc/server.o irc/channel.o irc/member.o
+OBJS=main.o config.o handler.o
+IRC_OBJS=irc/connection.o irc/server.o irc/channel.o irc/member.o irc/message.o
 TARGETS=bot
 
 all: $(TARGETS)
@@ -12,8 +14,14 @@ all: $(TARGETS)
 bot: $(OBJS) $(IRC_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-%.o: %.cxx %.h Makefile debug.h
+$(IRC_OBJS): %.o: %.cpp %.h Makefile
 	$(CXX) -c $(CFLAGS) -o $@ $<
+
+$(OBJS): %.o: %.cpp %.h Makefile
+	$(CXX) -c $(CFLAGS) -o $@ $<
+
+## %.o: %.cpp %.h Makefile debug.h
+##	$(CXX) -c $(CFLAGS) -o $@ $<
 
 .PHONY: clean
 clean:

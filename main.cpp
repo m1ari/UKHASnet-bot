@@ -6,6 +6,7 @@
 #include "irc/connection.h"
 #include "irc/server.h"
 #include "config.h"
+#include "handler.h"
 
 
 using namespace UKHASnet;
@@ -13,25 +14,39 @@ using namespace UKHASnet;
 int main(int argc, char **argv){
 	fprintf(stderr,"Starting with PID %d\n", getpid());
 	//irc::Connection freenode;
-	Config conf;
 
+	// Load the config in
+	Config conf;
 	conf.setFile("config.json");
 	conf.loadConfig();
 
+	// Setup handler process
+	Handler h;
+	h.start();
+
+	// Get list of IRC Servers
 	std::list<std::string> ircServers;
 	ircServers = conf.getIRCServerList();
 
+	// Iterate over the list of Servers
 	std::map<std::string, irc::Connection> ircConnections;
-
+	//std::map<std::string, irc::Channel> ircChannels;
 	for (std::list<std::string>::iterator it = ircServers.begin(); it != ircServers.end(); it++){
+		// Get Server details
 		irc::Server s;
 		s=conf.getIRCServer(*it);
 		std::cout << "Got Server: " << s.getServer() << "(" << s.getNick() << "!" << s.getUser() << std::endl;
+
+		// Create connection to server
 		ircConnections[*it].setServer(s.getServer());
 		ircConnections[*it].setNick(s.getNick());
 		ircConnections[*it].setUser(s.getUser());
 		ircConnections[*it].connect();
+		while (!ircConnections[*it].isConnected()){
+			sleep (1);
+		}
 
+		// Get list of channels for the server
 		std::list<std::string> channels;
 		channels=conf.getIRCChannels(*it);
 		for (std::list<std::string>::iterator it2 = channels.begin(); it2 != channels.end(); it2++){
@@ -46,7 +61,7 @@ int main(int argc, char **argv){
 	//std::cout << "Server: " << conf.getString(2, "irc", "server") << std::endl;
 	//std::cout << "Channels: " << conf.getString(2, "irc", "channels") << std::endl;
 
-	sleep(30);
+	sleep(600);
 
 
 	for (std::list<std::string>::iterator it = ircServers.begin(); it != ircServers.end(); it++){
