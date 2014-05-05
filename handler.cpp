@@ -54,6 +54,7 @@ namespace UKHASnet {
 					// Log Hidden
 				} else {
 					// Log normal
+				}
 
 				// TODO Ideally this should be managed via a map created by functions registering themselves
 				if (msg.getText().find("!help") == 0){
