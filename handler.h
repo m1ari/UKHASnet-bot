@@ -1,7 +1,7 @@
 #ifndef handler_h_
 #define handler_h_
 
-#include <list>
+#include <queue>
 #include <pthread.h>
 #include "irc/connection.h"
 #include "irc/message.h"
@@ -12,23 +12,24 @@ class Handler {
 	private:
 		static pthread_mutex_t mutex;
 		pthread_t threadid;
-		static std::list<irc::Message> messages;
+		static std::queue<irc::Message> messages;
 		static bool run;
 		irc::Connection *server;
 
-		// Tread functions
+		// Thread functions
                 static void* entryPoint(void *pthis);
 		void mainLoop();
 	public:
-		Handler();
-		Handler(irc::Connection *server);
+		Handler();			// Used by the main process
+		Handler(void *server);		// Used by a server process
 		~Handler();
 
-		// Tread functions
+		// Thread functions
 		void start();
 		void stop();
 
-		void addMessage(irc::Message mesg);
+		// Functions for server process
+		void addMessage(irc::Message msg);
 	protected:
 
 };

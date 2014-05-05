@@ -14,6 +14,7 @@
 //#include <syslog.h>
 #include <unistd.h>
 #include "connection.h"
+#include "../handler.h"
 
 namespace UKHASnet {
 namespace irc {
@@ -96,7 +97,7 @@ namespace irc {
 
 		// With C++11 we could use stl::regex instead
 		regex_t r_privmsg, r_join, r_part, r_numeric;
-		const int n_matches=5;
+		const int n_matches=6;
 		int r;
 		regmatch_t matches[n_matches];
 
@@ -117,6 +118,8 @@ namespace irc {
 			std::cout << "Message: " << buffer << std::endl;
 		}
 
+		//Handler h = new Handler(this);
+		Handler h(this);
 		while (run){
 			memset(readbuff,0,513);
 			bytes=read(sockfd,readbuff,512);
@@ -136,9 +139,16 @@ namespace irc {
 				if (line.find("PING") == 0){
 					sendPong(line);
 				} else if ((r=regexec(&r_privmsg, line.c_str(), n_matches, matches,0)) == 0) {
-					std::cout << "PRIVMSG: " << line << std::endl;
 					// Channel : :mfa298!~mfa298@gateway.yapd.net PRIVMSG #foo :bar
 					// Private : :mfa298!~mfa298@gateway.yapd.net PRIVMSG HasBot :foobar
+					Message m;
+					m.setNick(line.substr(matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so));
+					m.setUser(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so));
+					m.setHost(line.substr(matches[3].rm_so, matches[3].rm_eo-matches[3].rm_so));
+					m.setDest(line.substr(matches[4].rm_so, matches[4].rm_eo-matches[4].rm_so));
+					m.setText(line.substr(matches[5].rm_so, matches[5].rm_eo-matches[5].rm_so));
+					//std::cout << "PRIVMSG: " << line << std::endl;
+					h.addMessage(m);
 				} else if ((r=regexec(&r_join, line.c_str(), n_matches, matches,0)) == 0) {
 					std::cout << "JOIN: " << line << std::endl;
 					// Us    : :HasBot!~HasBot@gateway.yapd.net JOIN :#foo
@@ -151,9 +161,7 @@ namespace irc {
 					// Us (msg): :HasBot!~HasBot@gateway.yapd.net PART #foo : wibble
 					// Other   : :mfa298!~mfa298@gateway.yapd.net PART #bar :mfa298
 				} else if ((r=regexec(&r_numeric, line.c_str(), n_matches, matches,0)) == 0) {
-					std::string tmp=line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so);
-					int num;
-					num=strtol(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so).c_str(), NULL, 10);
+					int num=strtol(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so).c_str(), NULL, 10);
 					switch (num) {
 						case 1:		// RPL_WELCOME
 							connected=true;

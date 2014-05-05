@@ -1,27 +1,29 @@
-#include <list>
+#include <queue>
 #include <pthread.h>
 #include <cstdio>
+#include <iostream>
 #include <unistd.h>
 #include "handler.h"
 #include "irc/server.h"
 #include "irc/message.h"
 
 namespace UKHASnet {
-
 	// Static vars
 	pthread_mutex_t Handler::mutex=PTHREAD_MUTEX_INITIALIZER;
-	//std::list<irc::Message> Handler::messages;
+	std::queue<irc::Message> Handler::messages;
 	bool Handler::run=false;
 
 	Handler::Handler(){
 		server=NULL;
 	}
 
-	Handler::Handler(irc::Connection *s){
-		server=s;
+	Handler::Handler(void *s){
+		server = (irc::Connection*)s;
+		// Increment server ref count ?
 	}
 
 	Handler::~Handler(){
+		// Decrement server ref count ?
 
 	}
 
@@ -33,10 +35,37 @@ namespace UKHASnet {
 
 	void Handler::mainLoop(){
 		printf("Handler process started\n");
+		irc::Message msg;
 		while (run){
-			// if queue empty
-			sleep(1);
-			// else do matches
+			pthread_mutex_lock(&mutex);
+			if (messages.empty()){
+				//std::cout << "Handler: No Messages" << std::endl;
+				pthread_mutex_unlock(&mutex);
+				sleep(1);
+			} else {
+				// TODO need to check that msg will be a copy otherwise this isn't safe
+				msg=messages.front();
+				messages.pop();
+				pthread_mutex_unlock(&mutex);
+
+				// Log
+				// If is channel
+				if (msg.getText().find("!h ") == 0){
+					// Log Hidden
+				} else {
+					// Log normal
+
+				// TODO Ideally this should be managed via a map created by functions registering themselves
+				if (msg.getText().find("!help") == 0){
+					std::cout << "Handler: Got help request" << std::endl;
+				} else if (msg.getText().find("!node") == 0){
+					std::cout << "Handler: Got Node request" << std::endl;
+				} else if (msg.getText().find("!follow") == 0){
+					std::cout << "Handler: Got Follow request" << std::endl;
+				} else {
+					std::cout << "Handler: Processing " << msg.getNick() << ": " << msg.getText() << std::endl;
+				}
+			}
 		}
 		printf("Handler prcess ending\n");
 	}
@@ -45,7 +74,7 @@ namespace UKHASnet {
 		if (server!=NULL){
 			fprintf(stderr, "Error: Trying to start handler thread with server defined\n");
 			return;
-			// Only start the tread if this instance doesn't have a server ID set
+			// Only start the thread if this instance doesn't have a server ID set
 		}
 
 		if (run==true){
@@ -59,19 +88,20 @@ namespace UKHASnet {
 
 	void Handler::stop(){
 		run=false;
+		pthread_join(threadid,NULL);
 	}
-
 
 	void Handler::addMessage(irc::Message msg){
+		if (server!=NULL){
+			// set the msg server object if it's not set
+			if (!msg.hasServer()){
+				msg.setServer(server);
+			}
+			pthread_mutex_lock(&mutex);
+			messages.push(msg);
+			pthread_mutex_unlock(&mutex);
+		} else {
+			// server not set - we shouldn't add this message
+		}
 	}
-
 }
-
-/*
-        private:
-                static pthread_mutex_t mutex;
-                static std::list<message> messages;
-                static bool run=false;
-                irc::Connection *server;
-
-*/
