@@ -165,6 +165,7 @@ namespace irc {
 					switch (num) {
 						case 1:		// RPL_WELCOME
 							connected=true;
+							// TODO go through channels and join if we havn't already
 						case 2:		// RPL_YOURHOST
 						case 3:		// RPL_CREATED
 						case 4:		// RPL_MYINFO

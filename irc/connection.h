@@ -17,6 +17,10 @@ class Connection {
 		std::string username;
 		std::string realname;
 		std::string password;
+
+		//FILE logfd;
+		//bool serverlog;
+		//time_t
 		// list of channels
 		//std::queue<std::string> messages;	// Change to class that helps parse data and keep state
 
