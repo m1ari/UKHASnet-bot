@@ -12,8 +12,11 @@
 using namespace UKHASnet;
 
 int main(int argc, char **argv){
+	// Control for main process
+	bool run;
+	run=true;
+
 	fprintf(stderr,"Starting with PID %d\n", getpid());
-	//irc::Connection freenode;
 
 	// Load the config in
 	Config conf;
@@ -22,6 +25,7 @@ int main(int argc, char **argv){
 
 	// Setup handler process
 	Handler h;
+	// TODO Pass reference for main loop below for handler to use (&bool or local Queue ?)
 	h.start();
 
 	// Get list of IRC Servers
@@ -30,17 +34,19 @@ int main(int argc, char **argv){
 
 	// Iterate over the list of Servers
 	std::map<std::string, irc::Connection> ircConnections;
-	//std::map<std::string, irc::Channel> ircChannels;
 	for (std::list<std::string>::iterator it = ircServers.begin(); it != ircServers.end(); it++){
-		// Get Server details
+		// Get Server details from the config file
 		irc::Server s;
 		s=conf.getIRCServer(*it);
-		std::cout << "Got Server: " << s.getServer() << "(" << s.getNick() << "!" << s.getUser() << std::endl;
+		std::cout << "Got Server: " << s.getServer() << "(" << s.getNick() << "!" << s.getUser() << ")" << std::endl;
 
-		// Create connection to server
+		// Tell each connection about the server it connects to
 		ircConnections[*it].setServer(s);
 		if (s.getConnect()==true){
+			// Start new thread and Connect to server
 			ircConnections[*it].connect();
+			// TODO Once connection process remembers channels
+			// and auto connects we won't need to wait here
 			while (!ircConnections[*it].isConnected()){
 				sleep (1);
 			}
@@ -55,16 +61,30 @@ int main(int argc, char **argv){
 		}
 	}
 
+	fd_set readfs;
+	struct timeval timeout;
+	int res,key;
 
+	while (run){
+		// TODO Need a good way of getting key presses - look at ncurses ?
+		FD_SET(0,&readfs);
+		timeout.tv_sec=0;
+		timeout.tv_usec=1000;
+		res=select(1, &readfs, NULL, NULL, &timeout);
+		if (res){
+			key=getchar();
+			printf(">%c\n", key);
+		}
+		// Look for key presses 
+		// Handle stuff Queue items from Handler (if we give it a queue to use)
 
-// map / set to store connections
-	//std::cout << "Server: " << conf.getString(2, "irc", "server") << std::endl;
-	//std::cout << "Channels: " << conf.getString(2, "irc", "channels") << std::endl;
+		sleep(1);
 
-	sleep(600);
+	}
 
 
 	for (std::list<std::string>::iterator it = ircServers.begin(); it != ircServers.end(); it++){
+		// TODO Should just tell the servers to disconnect and they'll leave the channels
 		std::list<std::string> channels;
 		channels=conf.getIRCChannels(*it);
 		for (std::list<std::string>::iterator it2 = channels.begin(); it2 != channels.end(); it2++){
@@ -72,12 +92,4 @@ int main(int argc, char **argv){
 		}
 		ircConnections[*it].disconnect();
 	}
-
-	/*
-	for (int i=0; i<600; i++){
-		sleep(1);
-	}
-	*/
-	//freenode.disconnect();
-
 }
