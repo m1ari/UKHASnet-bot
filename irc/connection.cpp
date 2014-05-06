@@ -137,6 +137,8 @@ namespace irc {
 
 		Handler h(this);
 		while (run){
+			// TODO Move (some) connection stuff inside this loop
+
 			memset(readbuff,0,513);
 			bytes=read(sockfd,readbuff,512);
 			if (bytes>0){
@@ -220,17 +222,49 @@ namespace irc {
 
 					// Notice
 
-				}
-			}
+				} // Mega If
+			} // while(lines)
 			// TODO handle server disconnecting
 
-		}
+		} // while(run)
+
+		// Disconnect from server
+
+		regfree(&r_privmsg);
+		regfree(&r_join);
+		regfree(&r_part);
+		regfree(&r_numeric);
+
 		connected=false;
+	}
+
+	void Connection::openLog(struct tm *tm_now){
+		if (logfd == NULL){
+			char buff[100];
+			snprintf(buff,100,"log/%s-%04d-%02d-%02d.log", s.getName().c_str(), (tm_now->tm_year+1900), (tm_now->tm_mon+1), tm_now->tm_mday);
+
+			logfd=fopen(buff, "a");
+			if (logfd==NULL){
+				perror("irc::Connection");
+				return;
+			}
+			strftime(buff,100,"<%F>-<%T>",tm_now);
+			fprintf(logfd, "===== Opening Log %s =====\n",buff);
+		}
+
+	}
+	void Connection::closeLog(struct tm *tm_now){
+		if (logfd != NULL){
+			char buff[100];
+			strftime(buff,100,"<%F>-<%T>",tm_now);
+			fprintf(logfd, "===== Closing Log %s =====\n",buff);
+			fclose(logfd);
+			logfd=NULL;	// Do we need to do this ??
+		}
 	}
 
 	void Connection::writeLog(std::string type, std::string msg){
 		// TODO should only run if server is set to log
-		char buff[100];
 		struct timeval now;
 		if ( gettimeofday(&now,NULL) <0 ){
 			perror("irc::Connection");
@@ -242,32 +276,24 @@ namespace irc {
 		gmtime_r(&logtime,&tm_log);
 
 		if ((tm_now.tm_year != tm_log.tm_year) || (tm_now.tm_yday != tm_log.tm_yday) ){
-			if (logfd != NULL){
-				strftime(buff,100,"<%F>-<%T>",&tm_now);
-				fprintf(logfd, "===== Closing Log %s =====\n",buff);
-				fclose(logfd);
-				logfd=NULL;	// Do we need to do this ??
-			}
-
-			if (logfd == NULL){
-				snprintf(buff,100,"log/%s-%04d-%02d-%02d.log", s.getName().c_str(), (tm_now.tm_year+1900), (tm_now.tm_mon+1), tm_now.tm_mday);
-
-				logfd=fopen(buff, "a");
-				if (logfd==NULL){
-					perror("irc::Connection");
-					return;
-				}
-				logtime=now.tv_sec;
-				strftime(buff,100,"<%F>-<%T>",&tm_now);
-				fprintf(logfd, "===== Opening Log %s =====\n",buff);
-			}
+			closeLog(&tm_now);
+			openLog(&tm_now);
+			logtime=now.tv_sec;
 		}
 
-		strftime(buff,100,"%T",&tm_now);
-		// TODO now.tv_usec isn't limited to 3 digits as it's an integer...
-		fprintf(logfd, "[%02d:%02d:%02d.%03ld] %s: %s\n", tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec, now.tv_usec, type.c_str(), msg.c_str());
+		// Trim any \r\n from the end of string - Other options at
+		// http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+		msg.erase(msg.find_last_not_of("\n\r")+1);
 
-		fflush(logfd);
+		if (logfd!=NULL){
+			// TODO now.tv_usec isn't limited to 3 digits as it's an integer...
+			fprintf(logfd, "[%02d:%02d:%02d.%03ld] %s: %s\n", tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec, now.tv_usec, type.c_str(), msg.c_str());
+			fflush(logfd);
+		} else {
+			// TODO rate limit error messages
+			fprintf(stderr, "Error(irc::Connection): Not writing logs to file\n");
+		}
+
 	}
 
 	void Connection::sendBuffer(const char* buf, size_t length){
@@ -277,12 +303,14 @@ namespace irc {
 	}
 
 	void Connection::disconnect(){
-		//syslog(LOG_NOTICE,"Connection: Stopping Thread");
+		// Itterate over channels
+		// Leave Channel
+		// Dump channel state
+
 		run=false;
 		pthread_join(threadid,NULL);
-		
-		// TODO Code to disconnect cleanly and clean up
-		//syslog(LOG_NOTICE,"Connection: Thread Stopped");
+
+		closeLog()
 	}
 
 	void Connection::sendNick(){

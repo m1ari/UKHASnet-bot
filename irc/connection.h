@@ -22,6 +22,8 @@ class Connection {
 
 		static void* entryPoint(void *pthis);
 		void mainLoop();
+		void openLog(struct tm *tm_now);
+		void closeLog(struct tm *tm_now);
 		void writeLog(std::string type, std::string msg);
 		void sendBuffer(const char* buf, size_t length);
 		void sendNick();
