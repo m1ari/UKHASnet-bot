@@ -310,7 +310,16 @@ namespace irc {
 		run=false;
 		pthread_join(threadid,NULL);
 
-		closeLog()
+
+		struct timeval now;
+		if ( gettimeofday(&now,NULL) <0 ){
+			perror("irc::Connection");
+			return;
+		}
+		struct tm tm_now;
+		gmtime_r(&now.tv_sec,&tm_now);
+		closeLog(&tm_now);
+
 	}
 
 	void Connection::sendNick(){
