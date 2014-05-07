@@ -1,5 +1,7 @@
 // #include <syslog.h>
 #include <cstdio>
+#include <signal.h>
+//#include <ncurses.h>
 #include <iostream>
 #include <unistd.h>
 #include <map>
@@ -11,11 +13,33 @@
 
 using namespace UKHASnet;
 
+volatile sig_atomic_t systemloop=true;
+void sig_handler(int sig);
+
 int main(int argc, char **argv){
 	// Control for main process
-	bool run;
-	run=true;
+	//bool run;
+	//run=true;
+	signal(SIGHUP,sig_handler);
+	signal(SIGTERM,sig_handler);
+	signal(SIGUSR1,sig_handler);
+	signal(SIGUSR2,sig_handler);
 
+	signal(SIGQUIT,sig_handler);
+	signal(SIGINT,sig_handler);
+	signal(SIGKILL,sig_handler);
+
+
+/*
+	// Startup minimal ncurses
+	initscr();
+	cbreak();
+	noecho();
+	curs_set(0);
+	timeout(10);
+	start_color();
+	keypad(stdscr, TRUE);
+*/
 	fprintf(stderr,"Starting with PID %d\n", getpid());
 
 	// Load the config in
@@ -61,12 +85,14 @@ int main(int argc, char **argv){
 		}
 	}
 
-	fd_set readfs;
-	struct timeval timeout;
-	int res,key;
+	//fd_set readfs;
+	//struct timeval timeout;
+	//int res,
+	int key;
 
-	while (run){
+	while (systemloop){
 		// TODO Need a good way of getting key presses - look at ncurses ?
+/*
 		FD_SET(0,&readfs);
 		timeout.tv_sec=0;
 		timeout.tv_usec=1000;
@@ -78,8 +104,18 @@ int main(int argc, char **argv){
 		// Look for key presses 
 		// Handle stuff Queue items from Handler (if we give it a queue to use)
 
+*/
 		sleep(1);
 
+		//key=getch();
+		//switch(key){
+			//case 'a' ... 'z':
+			//case 'A' ... 'Z':
+			//case '0' ... '9':
+				//printf(">%c\n",key);
+			//break;
+
+		//}
 	}
 
 
@@ -92,4 +128,34 @@ int main(int argc, char **argv){
 		}
 		ircConnections[*it].disconnect();
 	}
+	//endwin();	// close ncurses
 }
+
+void sig_handler(int sig){
+	fprintf(stderr,"Got Signal %d\n",sig);
+	switch (sig){
+		case SIGHUP:
+			// Sig HUP, Do a reload
+			fprintf(stderr,"Sig: Got SIGHUP\n");
+		break;
+		case SIGINT: // 2
+			// Interupt (Ctrl c From command line) - Graceful shutdown
+			fprintf(stderr,"Sig: Got SIGINT - Shutting down\n");
+			systemloop=false;
+		break;
+		case 15:
+			// TERM
+			fprintf(stderr,"Sig: Got SIGTERM\n");
+		break;
+		case 16:
+			// USR1
+			fprintf(stderr,"Sig: Got SIGUSR1\n");
+		break;
+		case 17:
+			// USR2
+			fprintf(stderr,"Sig: Got SIGUSR2\n");
+		break;
+	}
+}
+
+
