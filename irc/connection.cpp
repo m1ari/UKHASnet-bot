@@ -306,20 +306,21 @@ namespace irc {
 		// Itterate over channels
 		// Leave Channel
 		// Dump channel state
-
-		run=false;
-		pthread_join(threadid,NULL);
-
-
-		struct timeval now;
-		if ( gettimeofday(&now,NULL) <0 ){
-			perror("irc::Connection");
-			return;
+		if (run==true){
+			run=false;
+			pthread_join(threadid,NULL);
 		}
-		struct tm tm_now;
-		gmtime_r(&now.tv_sec,&tm_now);
-		closeLog(&tm_now);
 
+		if (logfd != NULL){
+			struct timeval now;
+			if ( gettimeofday(&now,NULL) <0 ){
+				perror("irc::Connection");
+				return;
+			}
+			struct tm tm_now;
+			gmtime_r(&now.tv_sec,&tm_now);
+			closeLog(&tm_now);
+		}
 	}
 
 	void Connection::sendNick(){
@@ -401,7 +402,7 @@ namespace irc {
 	void Connection::join(std::string channel){
 		// TODO add channel to list of channels
 		// s.addChannel(Channel(channel));
-		if (connected == true){
+		if ((run==true) && (connected == true)){
 			sendJoin(channel);
 		}
 	}
@@ -409,7 +410,9 @@ namespace irc {
 	void Connection::part(std::string channel, std::string msg){
 		// TODO remove from the list of channels
 		// s.delChannel(Channel(channel));
-		sendPart(channel, msg);
+		if ((run==true) && (connected == true)){
+			sendPart(channel, msg);
+		}
 	}
 
 	bool Connection::isConnected() const{
