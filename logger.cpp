@@ -8,12 +8,21 @@
 namespace UKHASnet {
 	Logger::Logger(){
 		path="log";
+		name="unknown";
 		logfd=NULL;
 		logtime=0;
 	}
 	Logger::Logger(std::string p, std::string n){
-		setPath(p);
-		setName(n);
+		if (!p.empty()){
+			path=p;
+		} else {
+			path="log";
+		}
+		if (!n.empty()){
+			name=n;
+		} else {
+			name="unknown";
+		}
 		logfd=NULL;
 		logtime=0;
 	}
