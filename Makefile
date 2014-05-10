@@ -3,9 +3,10 @@ CFLAGS=-O2 -g -Wall
 
 CC=g++
 
-LIBS=-lpthread -ljansson -lncurses
+LIBS=-lpthread -ljansson
+	# -lncurses
 
-OBJS=main.o config.o handler.o
+OBJS=main.o config.o handler.o logger.o
 IRC_OBJS=irc/connection.o irc/server.o irc/message.o irc/member.o irc/channel.o
 TARGETS=bot
 

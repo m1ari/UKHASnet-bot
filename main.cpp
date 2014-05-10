@@ -29,17 +29,6 @@ int main(int argc, char **argv){
 	signal(SIGINT,sig_handler);
 	signal(SIGKILL,sig_handler);
 
-
-/*
-	// Startup minimal ncurses
-	initscr();
-	cbreak();
-	noecho();
-	curs_set(0);
-	timeout(10);
-	start_color();
-	keypad(stdscr, TRUE);
-*/
 	fprintf(stderr,"Starting with PID %d\n", getpid());
 
 	// Load the config in
@@ -55,6 +44,7 @@ int main(int argc, char **argv){
 	// Get list of IRC Servers
 	std::list<std::string> ircServers;
 	ircServers = conf.getIRCServerList();
+
 
 	// Iterate over the list of Servers
 	std::map<std::string, irc::Connection> ircConnections;
@@ -85,37 +75,9 @@ int main(int argc, char **argv){
 		}
 	}
 
-	//fd_set readfs;
-	//struct timeval timeout;
-	//int res,
-	int key;
-
 	while (systemloop){
-		// TODO Need a good way of getting key presses - look at ncurses ?
-/*
-		FD_SET(0,&readfs);
-		timeout.tv_sec=0;
-		timeout.tv_usec=1000;
-		res=select(1, &readfs, NULL, NULL, &timeout);
-		if (res){
-			key=getchar();
-			printf(">%c\n", key);
-		}
-		// Look for key presses 
-		// Handle stuff Queue items from Handler (if we give it a queue to use)
-
-*/
+		// TODO handle keypresses - or just go to background and signals ?
 		sleep(1);
-
-		//key=getch();
-		//switch(key){
-			//case 'a' ... 'z':
-			//case 'A' ... 'Z':
-			//case '0' ... '9':
-				//printf(">%c\n",key);
-			//break;
-
-		//}
 	}
 
 
@@ -128,7 +90,6 @@ int main(int argc, char **argv){
 		}
 		ircConnections[*it].disconnect();
 	}
-	//endwin();	// close ncurses
 }
 
 void sig_handler(int sig){
