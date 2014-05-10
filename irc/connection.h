@@ -4,6 +4,7 @@
 #include <string>
 #include <ctime>
 #include "server.h"
+#include "../logger.h"
 
 namespace UKHASnet {
 namespace irc {
@@ -16,15 +17,10 @@ class Connection {
 		int sockfd;
 		Server s;
 
-		// TODO Add file logging
-		FILE *logfd;
-		time_t logtime;
+		Logger log;
 
 		static void* entryPoint(void *pthis);
 		void mainLoop();
-		void openLog(struct tm *tm_now);
-		void closeLog(struct tm *tm_now);
-		void writeLog(std::string type, std::string msg);
 		void sendBuffer(const char* buf, size_t length);
 		void sendNick();
 		void sendUser();

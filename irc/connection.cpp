@@ -13,10 +13,11 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netdb.h>
-//#include <syslog.h>
 #include <unistd.h>
-#include "connection.h"
 #include "../handler.h"
+#include "../logger.h"
+#include "connection.h"
+
 
 namespace UKHASnet {
 namespace irc {
@@ -24,8 +25,6 @@ namespace irc {
 	Connection::Connection() {
 		run=false;
 		connected=false;
-		logfd=NULL;
-		logtime=0;
 	};
 	Connection::~Connection() {
 	};
@@ -51,6 +50,8 @@ namespace irc {
 		// TODO we should check required variables are set, if not cylce around until they are.
 		//		As minimum we need to know Server, User and Nick
 		// TODO We need to handle server disconnects and bad addresses in the list from gethostbyname
+
+		log.setName(s.getName());
 
 		struct sockaddr_in dest;
 		struct hostent *he;
@@ -153,7 +154,7 @@ namespace irc {
 			while ((pos=std::find(buffer.begin(), buffer.end(), '\n')) != buffer.end()){
 				line   = std::string(buffer.begin(),pos);
 				buffer = std::string(pos+1, buffer.end());
-				writeLog("RX", line);
+				log.writeLog("RX", line);
 
 				if (line.find("PING") == 0){
 					sendPong(line);
@@ -238,66 +239,8 @@ namespace irc {
 		connected=false;
 	}
 
-	void Connection::openLog(struct tm *tm_now){
-		if (logfd == NULL){
-			char buff[100];
-			snprintf(buff,100,"log/%s-%04d-%02d-%02d.log", s.getName().c_str(), (tm_now->tm_year+1900), (tm_now->tm_mon+1), tm_now->tm_mday);
-
-			logfd=fopen(buff, "a");
-			if (logfd==NULL){
-				perror("irc::Connection");
-				return;
-			}
-			strftime(buff,100,"<%F>-<%T>",tm_now);
-			fprintf(logfd, "===== Opening Log %s =====\n",buff);
-		}
-
-	}
-	void Connection::closeLog(struct tm *tm_now){
-		if (logfd != NULL){
-			char buff[100];
-			strftime(buff,100,"<%F>-<%T>",tm_now);
-			fprintf(logfd, "===== Closing Log %s =====\n",buff);
-			fclose(logfd);
-			logfd=NULL;	// Do we need to do this ??
-		}
-	}
-
-	void Connection::writeLog(std::string type, std::string msg){
-		// TODO should only run if server is set to log
-		struct timeval now;
-		if ( gettimeofday(&now,NULL) <0 ){
-			perror("irc::Connection");
-			return;
-		}
-
-		struct tm tm_now, tm_log;
-		gmtime_r(&now.tv_sec,&tm_now);
-		gmtime_r(&logtime,&tm_log);
-
-		if ((tm_now.tm_year != tm_log.tm_year) || (tm_now.tm_yday != tm_log.tm_yday) ){
-			closeLog(&tm_now);
-			openLog(&tm_now);
-			logtime=now.tv_sec;
-		}
-
-		// Trim any \r\n from the end of string - Other options at
-		// http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-		msg.erase(msg.find_last_not_of("\n\r")+1);
-
-		if (logfd!=NULL){
-			// TODO now.tv_usec isn't limited to 3 digits as it's an integer...
-			fprintf(logfd, "[%02d:%02d:%02d.%03ld] %s: %s\n", tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec, now.tv_usec, type.c_str(), msg.c_str());
-			fflush(logfd);
-		} else {
-			// TODO rate limit error messages
-			fprintf(stderr, "Error(irc::Connection): Not writing logs to file\n");
-		}
-
-	}
-
 	void Connection::sendBuffer(const char* buf, size_t length){
-		writeLog("TX", buf);
+		log.writeLog("TX", buf);
 		send(sockfd, buf, length, 0);
 
 	}
@@ -311,6 +254,7 @@ namespace irc {
 			pthread_join(threadid,NULL);
 		}
 
+/*
 		if (logfd != NULL){
 			struct timeval now;
 			if ( gettimeofday(&now,NULL) <0 ){
@@ -321,6 +265,8 @@ namespace irc {
 			gmtime_r(&now.tv_sec,&tm_now);
 			closeLog(&tm_now);
 		}
+		// TODO do we need a Logger.close method or just leave it up to the destructor
+*/
 	}
 
 	void Connection::sendNick(){
