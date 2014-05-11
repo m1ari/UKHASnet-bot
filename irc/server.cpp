@@ -63,25 +63,29 @@ namespace irc {
 		return connect;
 	}
 
-/*
-	void Server::addChannel(Channel c){
-		channels.push_back(c);
+
+	// The following functions should change to use the Channel object at a later date
+	void Server::addChannel(std::string c){
+		channels.insert(c);
 	}
-	void Server::delChannel(Channel c){
-		for (std::vector<Channel>::iterator it = channels.begin(); it != channels.end(); it++){
-			if (c == *it){
-				channels.erase(it);
-			}
-		}
+
+	void Server::delChannel(std::string c){
+		channels.erase(c);
 	}
 	size_t Server::getNumChannels() const {
 		return channels.size();
 	}
+/*
 	Channel Server::getChannel(int n) const {
 		return channels.at(n);
 	}
-	bool Server::isChannel(std::string s) const {
-	}
 */
+	bool Server::isChannel(std::string s) const {
+		if (channels.find(s) != channels.end()){
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 }

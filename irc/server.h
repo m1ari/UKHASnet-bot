@@ -2,7 +2,7 @@
 #define irc_server_h_
 
 #include <string>
-#include <vector>
+#include <set>
 // #include "channel.h"
 
 namespace UKHASnet {
@@ -19,7 +19,7 @@ class Server {
 		bool log;
 		bool connect;
 
-		//std::vector<Channel> channels;
+		std::set<std::string> channels;	// Change to use Channel object later
 
 	public:
 		Server();
@@ -43,11 +43,11 @@ class Server {
 		bool getLog() const;
 		bool getConnect() const;
 
-		//void addChannel(Channel c);
-		//void delChannel(Channel c);
-		//size_t getNumChannels() const;
+		void addChannel(std::string c);
+		void delChannel(std::string c);
+		size_t getNumChannels() const;
 		//Channel getChannel(int n) const;
-		//bool isChannel(std::string c) const;
+		bool isChannel(std::string channel) const;
 
 	protected:
 
