@@ -41,6 +41,7 @@ class Connection {
 		void join(std::string channel);		// Join Channel
 		void part(std::string channel, std::string msg="");	// Leave Channel
 		bool isConnected() const;		// Are we currently connected to the server
+		std::string getServerName() const;	// Get the ID of the server we're connected to
 	protected:
 
 };

@@ -364,5 +364,10 @@ namespace irc {
 	bool Connection::isConnected() const{
 		return connected;
 	}
+
+	std::string Connection::getServerName() const{
+		return s.getName();
+	}
+
 }
 }
