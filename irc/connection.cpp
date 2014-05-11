@@ -348,6 +348,7 @@ namespace irc {
 	void Connection::join(std::string channel){
 		// TODO add channel to list of channels
 		// s.addChannel(Channel(channel));
+		s.addChannel(channel);
 		if ((run==true) && (connected == true)){
 			sendJoin(channel);
 		}
@@ -356,6 +357,7 @@ namespace irc {
 	void Connection::part(std::string channel, std::string msg){
 		// TODO remove from the list of channels
 		// s.delChannel(Channel(channel));
+		s.delChannel(channel);
 		if ((run==true) && (connected == true)){
 			sendPart(channel, msg);
 		}
@@ -367,6 +369,10 @@ namespace irc {
 
 	std::string Connection::getServerName() const{
 		return s.getName();
+	}
+
+	bool Connection::isChannel(std::string channel) const{
+		return s.isChannel(channel);
 	}
 
 }
