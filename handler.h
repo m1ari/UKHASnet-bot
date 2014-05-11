@@ -2,9 +2,11 @@
 #define handler_h_
 
 #include <queue>
+#include <map>
 #include <pthread.h>
 #include "irc/connection.h"
 #include "irc/message.h"
+#include "logger.h"
 
 namespace UKHASnet {
 
@@ -15,6 +17,8 @@ class Handler {
 		static std::queue<irc::Message> messages;
 		static bool run;
 		irc::Connection *server;
+
+		std::map<std::string, Logger> logs; // string made up as servername + channel
 
 		// Thread functions
                 static void* entryPoint(void *pthis);

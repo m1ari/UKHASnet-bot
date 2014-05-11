@@ -49,11 +49,28 @@ namespace UKHASnet {
 				pthread_mutex_unlock(&mutex);
 
 				// Log
-				// If is channel
-				if (msg.getText().find("!h ") == 0){
-					// Log Hidden
+				std::string logdest;
+				std::string logfile;
+				if (msg.getServer()->isChannel(msg.getDest())){
+					logdest=msg.getServer()->getServerName() + "/" +  msg.getDest();
+					logfile=msg.getDest();
 				} else {
-					// Log normal
+					logdest=msg.getServer()->getServerName() + "/" +  msg.getNick();
+					logfile=msg.getNick();
+				}
+
+				if (logs.find(logdest) == logs.end()) {	// Doesn't exist
+					logs[logdest].setPath("log/public/" + logdest);
+					logs[logdest].setName(logfile);
+					logs["~" + logdest].setPath("log/private/" + logdest);
+					logs["~" + logdest].setName(logfile);
+				}
+
+				if (msg.getText().find("!h ") == 0){	// Log Hidden
+					logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+				} else {				// Log Normal
+					logs[logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+					logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
 				}
 
 				// TODO Ideally this should be managed via a map created by functions registering themselves
