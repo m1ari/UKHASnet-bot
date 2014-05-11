@@ -1,7 +1,9 @@
 #include <string>
 #include <ctime>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <cstdio>
+#include <errno.h>
 #include "logger.h"
 
 
@@ -14,14 +16,14 @@ namespace UKHASnet {
 	}
 	Logger::Logger(std::string p, std::string n){
 		if (!p.empty()){
-			path=p;
+			setPath(p);
 		} else {
-			path="log";
+			setPath("log");
 		}
 		if (!n.empty()){
-			name=n;
+			setName(n);
 		} else {
-			name="unknown";
+			setName("unknown");
 		}
 		logfd=NULL;
 		logtime=0;
@@ -40,6 +42,26 @@ namespace UKHASnet {
 	}
 
 	void Logger::setPath(std::string p){
+		size_t pos=0;
+		struct stat st;
+		while (pos!=std::string::npos){
+			pos=p.find("/", pos+1);
+			if (stat(p.substr(0,pos).c_str(), &st) == -1 ){
+				if (errno == ENOENT){
+					fprintf(stderr, "Logger: Creating %s\n",p.substr(0,pos).c_str());
+					if (mkdir(p.substr(0,pos).c_str(),0755) == -1){
+						perror("Logger(mkdir)");
+					}
+				} else {
+					perror("Logger(setPath)");
+				}
+			} else {
+				if (!S_ISDIR(st.st_mode)){
+					fprintf(stderr, "Logger: %s isn't a directory\n",p.substr(0,pos).c_str());
+				}
+			}
+		}
+		//TODO should probably set path to something we know exists.
 		path=p;
 	}
 	void Logger::setName(std::string n){
@@ -74,6 +96,9 @@ namespace UKHASnet {
 		}
 	}
 
+	void Logger::writeLog(std::string msg){
+		writeLog("",msg);
+	}
 	void Logger::writeLog(std::string type, std::string msg){
 		struct timeval now;
 		if ( gettimeofday(&now,NULL) <0 ){

@@ -24,6 +24,7 @@ class Logger {
 		void setPath(std::string path);
 		void setName(std::string name);
 		void setFile(std::string file);
+		void writeLog(std::string msg);
 		void writeLog(std::string type, std::string msg);
 
 	protected:
