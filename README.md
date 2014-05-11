@@ -31,6 +31,9 @@ Also log other things (JOIN/PART/NICK/QUIT/MODE) ?
 
 Ideally in Future it should be possible to add the actual handlers to this class programatically
 
+#### Logger
+Handles logging to log files.
+
 #### main
 Not a class as such, but the main process for the bot.
 
@@ -49,23 +52,23 @@ Used to store mesasges to and from the server
 Used to store details about a server
 
 
+### Work In Progress
+#### irc::Channel Class
+Will be used in the irc::Server class to store channel information (this is currently done with strings)
 
-
-
-
-### TODO / Delete from local source ...
-#### Channel Class
-Not currently used
-
-#### Member Class
-Not Currently used
+#### irc::Member Class
+Will be used by the irc::Channel class to store who's in (or has been in) a channel (needed for the !seen function)
 
 #### Database Class ??
 Handles connection to DB
 
 #### Classes for Handlers (seen,follow,nodes)
+Ideally functions will be stored in their own classes allowing for easy extension of the code.
 
 ## Ubuntu Installation
 sudo apt-get install g++
 sudo apt-get install make
 sudo apt-get install libjansson-dev
+
+Note that this requires at least Jansson 2.3 (Ubuntu 12.04 has Jansson 2.2)
+
