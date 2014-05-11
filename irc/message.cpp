@@ -16,11 +16,11 @@ namespace irc {
 			return true;
 		}
 	}
-	void Message::setServer(void *s){
+	void Message::setServer(irc::Connection *s){
 		server=(irc::Connection *)s;
 	}
 
-	void* Message::getServer() const {
+	irc::Connection* Message::getServer() const {
 		return server;
 	}
 

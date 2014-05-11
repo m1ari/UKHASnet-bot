@@ -21,8 +21,8 @@ class Message {
 		~Message();
 
 		bool hasServer() const;
-		void setServer(void *server);
-		void *getServer() const;
+		void setServer(irc::Connection *server);
+		irc::Connection *getServer() const;
 
 		void setNick(std::string n);
 		void setUser(std::string u);
