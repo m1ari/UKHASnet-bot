@@ -9,8 +9,8 @@
 
 namespace UKHASnet {
 	Logger::Logger(){
-		path="log";
-		name="unknown";
+		setPath("log");
+		setName("unknown");
 		logfd=NULL;
 		logtime=0;
 	}
