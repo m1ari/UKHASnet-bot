@@ -67,10 +67,19 @@ namespace UKHASnet {
 				}
 
 				if (msg.getText().find("!h ") == 0){	// Log Hidden
-					logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+					if (msg.getText().find("ACTION") == 0){
+						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msg.getText());
+					} else {
+						logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+					}
 				} else {				// Log Normal
-					logs[logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
-					logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+					if (msg.getText().find("ACTION") == 0){
+						logs[logdest].writeLog(" *" + msg.getNick() + " " + msg.getText());
+						logs["~" + logdest].writeLog(" *" + msg.getNick() + " " + msg.getText());
+					} else {
+						logs[logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+						logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+					}
 				}
 
 				// TODO Ideally this should be managed via a map created by functions registering themselves
