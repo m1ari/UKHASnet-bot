@@ -111,7 +111,7 @@ namespace irc {
 		regmatch_t matches[n_matches];
 
 		// We could probably do these better using https://tools.ietf.org/html/rfc2812#section-2.3.1
-		if ( (r=regcomp(&r_privmsg, ":([^!]+)!([^@]+)@([^ ]+) PRIVMSG (.*) :(.*)", REG_EXTENDED)) != 0){
+		if ( (r=regcomp(&r_privmsg, ":([^!]+)!([^@]+)@([^ ]+) PRIVMSG ([^:]+) :(.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
 			regerror(r,&r_numeric,buffer,100);
 			fprintf(stderr, "Error: Compiling PRIVMSG Regex(%d):\n\t%s\n", r, buffer);
