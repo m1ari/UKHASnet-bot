@@ -66,18 +66,19 @@ namespace UKHASnet {
 					logs["~" + logdest].setName(logfile);
 				}
 
-				if (msg.getText().find("!h ") == 0){	// Log Hidden
-					if (msg.getText().find("ACTION") == 0){
-						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msg.getText());
+				if (msg.getText().find("\001ACTION") == 0){		// /me message
+					//TODO might want to strip trailing \001
+					if (msg.getText().find("!h ") == 8){		// ACTION !h
+						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msg.getText().substr(8));
 					} else {
-						logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msg.getText().substr(8));
+						logs[logdest].writeLog(      " * " + msg.getNick() + " " + msg.getText().substr(8));
 					}
-				} else {				// Log Normal
-					if (msg.getText().find("ACTION") == 0){
-						logs[logdest].writeLog(" *" + msg.getNick() + " " + msg.getText());
-						logs["~" + logdest].writeLog(" *" + msg.getNick() + " " + msg.getText());
+				} else {						// normal message
+					if (msg.getText().find("!h ") == 0){
+						logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
 					} else {
-						logs[logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
+						logs[logdest].writeLog(      "<" + msg.getNick() + "> " + msg.getText());
 						logs["~" + logdest].writeLog("<" + msg.getNick() + "> " + msg.getText());
 					}
 				}
