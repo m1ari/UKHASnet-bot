@@ -207,18 +207,15 @@ namespace irc {
 					h.addMessage(m);
 				} else if ((r=regexec(&r_join, line.c_str(), n_matches, matches,0)) == 0) {
 					std::cout << "JOIN: " << line << std::endl;
-					// Us    : :HasBot!~HasBot@gateway.yapd.net JOIN :#foo
-					// Other : :mfa298!~mfa298@gateway.yapd.net JOIN :#bar
-					// Freeno: :ukhasnet!~HasBot@gateway.yapd.net JOIN #ukhasnet-test
 					// channel.member.add / state joined
 					// ngircd appears to add an extra : into the channel name being joined
-
+				} else if ((r=regexec(&r_nick, line.c_str(), n_matches, matches,0)) == 0) {
+					std::cout << "NICK: " << line << std::endl;
 				} else if ((r=regexec(&r_part, line.c_str(), n_matches, matches,0)) == 0) {
 					std::cout << "PART: " << line << std::endl;
-					// Us      : :HasBot!~HasBot@gateway.yapd.net PART #foo :HasBot
-					// Us (msg): :HasBot!~HasBot@gateway.yapd.net PART #foo : wibble
-					// Other   : :mfa298!~mfa298@gateway.yapd.net PART #bar :mfa298
-					// channel.member.state - left
+				} else if ((r=regexec(&r_quit, line.c_str(), n_matches, matches,0)) == 0) {
+					std::cout << "QUIT: " << line << std::endl;
+					// Need to go over all channels see if they're a member and mark them as left
 				} else if ((r=regexec(&r_numeric, line.c_str(), n_matches, matches,0)) == 0) {
 					// RFC Section 2.4 (Format) & 5 (list)
 					// 1 Sender Prefix
