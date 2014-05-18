@@ -55,7 +55,7 @@ namespace irc {
 
 		struct sockaddr_in dest;
 		struct hostent *he;
-	
+
 		if ((sockfd = socket(AF_INET,SOCK_STREAM, 0)) < 0 ){
 			perror("Error(irc::Connection)");
 			return;
@@ -104,39 +104,76 @@ namespace irc {
 		int bytes;		// Number of bytes read
 
 
-		// With C++11 we could use stl::regex instead
-		regex_t r_privmsg, r_join, r_part, r_numeric;
-		const int n_matches=6;
-		int r;
-		regmatch_t matches[n_matches];
 
+		// Setup Regular Expressions to match
+		// With C++11 we could use stl::regex instead
 		// We could probably do these better using https://tools.ietf.org/html/rfc2812#section-2.3.1
-		if ( (r=regcomp(&r_privmsg, ":([^!]+)!([^@]+)@([^ ]+) PRIVMSG ([^:]+) :(.*)", REG_EXTENDED)) != 0){
+		int r;
+		regex_t r_privmsg;
+		//:mfa298!~mfa298@gateway.yapd.net PRIVMSG #ukhasnet :may not be ideal
+		//if ( (r=regcomp(&r_privmsg, ":([^!]+)!([^@]+)@([^ ]+) PRIVMSG ([^:]+) :(.*)", REG_EXTENDED)) != 0){
+		if ( (r=regcomp(&r_privmsg, ":(.+) PRIVMSG ([^:]+) :(.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
-			regerror(r,&r_numeric,buffer,100);
+			regerror(r,&r_privmsg,buffer,100);
 			fprintf(stderr, "Error: Compiling PRIVMSG Regex(%d):\n\t%s\n", r, buffer);
 			return;
 		}
-		if ( (r=regcomp(&r_join, ":([^!]+)!([^@]+)@([^ ]+) JOIN :(.*)", REG_EXTENDED)) != 0){
+		regex_t r_join;
+		//:mfa298!~mfa298@gateway.yapd.net JOIN #ukhasnet
+		if ( (r=regcomp(&r_join, ":(.+) JOIN (.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
-			regerror(r,&r_numeric,buffer,100);
+			regerror(r,&r_join,buffer,100);
 			fprintf(stderr, "Error: Compiling JOIN Regex(%d):\n\t%s\n", r, buffer);
 			return;
 		}
-		if ( (r=regcomp(&r_part, ":([^!]+)!([^@]+)@([^ ]+) PART (.*) :(.*)", REG_EXTENDED)) != 0){
+		regex_t r_nick;
+		//:mfa298!~mfa298@gateway.yapd.net NICK :mfa298___
+		if ( (r=regcomp(&r_nick, ":(.+) NICK ([^:]+) :(.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
-			regerror(r,&r_numeric,buffer,100);
+			regerror(r,&r_nick,buffer,100);
 			fprintf(stderr, "Error: Compiling PART Regex(%d):\n\t%s\n", r, buffer);
 			return;
 		}
+		regex_t r_part;
+		//:mattbrejza!~mattbrejz@kryten.hexoc.com PART #ukhasnet
+		if ( (r=regcomp(&r_part, ":(.+) PART ([^:]+)( :)?(.*)", REG_EXTENDED)) != 0){
+			char buffer[100];
+			regerror(r,&r_part,buffer,100);
+			fprintf(stderr, "Error: Compiling PART Regex(%d):\n\t%s\n", r, buffer);
+			return;
+		}
+		regex_t r_quit;
+		//:mfa298!~mfa298@gateway.yapd.net QUIT :Ping timeout: 252 seconds
+		if ( (r=regcomp(&r_quit, ":(.+) QUIT ([^:]+) :(.*)", REG_EXTENDED)) != 0){
+			char buffer[100];
+			regerror(r,&r_quit,buffer,100);
+			fprintf(stderr, "Error: Compiling PART Regex(%d):\n\t%s\n", r, buffer);
+			return;
+		}
+		regex_t r_numeric;
 		if ( (r=regcomp(&r_numeric, ":([a-zA-Z0-9\\.]+) ([0-9]+) ([^ ]+) (.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
 			regerror(r,&r_numeric,buffer,100);
 			fprintf(stderr, "Error: Compiling Numeric Regex(%d):\n\t%s\n", r, buffer);
 			return;
 		}
+		regex_t r_user;		// Split the "nick!user@host" portion of the message
+		if ( (r=regcomp(&r_user, "(.+)!(.+)@(.+)", REG_EXTENDED)) != 0){
+				////"([^!]+)!([^@]+)@([^ ]+)"
+			char buffer[100];
+			regerror(r,&r_user,buffer,100);
+			fprintf(stderr, "Error: Compiling user Regex(%d):\n\t%s\n", r, buffer);
+			return;
+		}
 
-		Handler h(this);
+		// Main Matches
+		const int n_matches=6;
+		regmatch_t matches[n_matches];
+		// r_user matches
+		const int n_umatches=4;
+		regmatch_t umatches[n_umatches];
+
+		Handler h(this);	// Access to the Handler thread (allows the handler to call back to this connection
 		while (run){
 			// TODO Move (some) connection stuff inside this loop
 
@@ -150,7 +187,6 @@ namespace irc {
 			std::string line;
 			std::string::iterator pos;
 
-			
 			while ((pos=std::find(buffer.begin(), buffer.end(), '\n')) != buffer.end()){
 				line   = std::string(buffer.begin(),pos);
 				buffer = std::string(pos+1, buffer.end());
@@ -158,16 +194,16 @@ namespace irc {
 
 				if (line.find("PING") == 0){
 					sendPong(line);
-				} else if ((r=regexec(&r_privmsg, line.c_str(), n_matches, matches,0)) == 0) {
-					// Channel : :mfa298!~mfa298@gateway.yapd.net PRIVMSG #foo :bar
-					// Private : :mfa298!~mfa298@gateway.yapd.net PRIVMSG HasBot :foobar
+				} else if (regexec(&r_privmsg, line.c_str(), n_matches, matches,0) == 0) {
 					Message m;
-					m.setNick(line.substr(matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so));
-					m.setUser(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so));
-					m.setHost(line.substr(matches[3].rm_so, matches[3].rm_eo-matches[3].rm_so));
-					m.setDest(line.substr(matches[4].rm_so, matches[4].rm_eo-matches[4].rm_so));
-					m.setText(line.substr(matches[5].rm_so, matches[5].rm_eo-matches[5].rm_so));
-					//std::cout << "PRIVMSG: " << line << std::endl;
+					std::string userhost=line.substr(matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so);
+					if (regexec(&r_user, userhost.c_str(), n_umatches,umatches,0) == 0){
+						m.setNick(userhost.substr(umatches[1].rm_so, umatches[1].rm_eo-umatches[1].rm_so));
+						m.setUser(userhost.substr(umatches[2].rm_so, umatches[2].rm_eo-umatches[2].rm_so));
+						m.setHost(userhost.substr(umatches[3].rm_so, umatches[3].rm_eo-umatches[3].rm_so));
+					}
+					m.setDest(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so));
+					m.setText(line.substr(matches[3].rm_so, matches[3].rm_eo-matches[3].rm_so));
 					h.addMessage(m);
 				} else if ((r=regexec(&r_join, line.c_str(), n_matches, matches,0)) == 0) {
 					std::cout << "JOIN: " << line << std::endl;
@@ -175,6 +211,7 @@ namespace irc {
 					// Other : :mfa298!~mfa298@gateway.yapd.net JOIN :#bar
 					// Freeno: :ukhasnet!~HasBot@gateway.yapd.net JOIN #ukhasnet-test
 					// channel.member.add / state joined
+					// ngircd appears to add an extra : into the channel name being joined
 
 				} else if ((r=regexec(&r_part, line.c_str(), n_matches, matches,0)) == 0) {
 					std::cout << "PART: " << line << std::endl;
