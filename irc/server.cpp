@@ -1,5 +1,5 @@
 #include "server.h"
-#include "channel.h"
+//#include "channel.h"
 
 namespace UKHASnet {
 namespace irc {
