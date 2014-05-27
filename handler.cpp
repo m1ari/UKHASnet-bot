@@ -67,12 +67,13 @@ namespace UKHASnet {
 				}
 
 				if (msg.getText().find("\001ACTION") == 0){		// /me message
-					//TODO might want to strip trailing \001
-					if (msg.getText().find("!h ") == 8){		// ACTION !h
-						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msg.getText().substr(8));
+					std::string msgtext = msg.getText().substr(8);	// Remove the \001ACTION part
+					msgtext.erase(msgtext.find_last_of('\001'),1);	// Remove the trailing \001
+					if (msgtext.find("!h ") == 0){		// ACTION !h
+						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msgtext);
 					} else {
-						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msg.getText().substr(8));
-						logs[logdest].writeLog(      " * " + msg.getNick() + " " + msg.getText().substr(8));
+						logs["~" + logdest].writeLog(" * " + msg.getNick() + " " + msgtext);
+						logs[logdest].writeLog(      " * " + msg.getNick() + " " + msgtext);
 					}
 				} else {						// normal message
 					if (msg.getText().find("!h ") == 0){
