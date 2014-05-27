@@ -39,6 +39,21 @@ namespace irc {
 	void Message::setText(std::string in){
 		text=in;
 	}
+	void Message::reply(std::string s, bool privmsg) const {
+		if (server->isChannel(dest)){
+			if (privmsg){
+				server->sendMsg(dest,"Hic!");
+			} else {
+				server->sendNotice(dest,"Hic!");
+			}
+		} else {
+			if (privmsg){
+				server->sendMsg(nick,"Hic!");
+			} else {
+				server->sendNotice(nick,"Hic!");
+			}
+		}
+	}
 
 	std::string Message::getNick() const{
 		return nick;

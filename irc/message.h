@@ -22,13 +22,14 @@ class Message {
 
 		bool hasServer() const;
 		void setServer(irc::Connection *server);
-		irc::Connection *getServer() const;
+		irc::Connection *getServer() const;	// Currently only used in handler - might be good to remove
 
 		void setNick(std::string n);
 		void setUser(std::string u);
 		void setHost(std::string h);
 		void setDest(std::string d);
 		void setText(std::string m);
+		void reply(std::string s, bool privmsg=false) const;	// false: NOTICE, true: PRIVMSG
 
 		std::string getNick() const;
 		std::string getUser() const;
