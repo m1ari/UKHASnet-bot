@@ -27,7 +27,6 @@ class Connection {
 		void sendPong(std::string req);
 		void sendJoin(std::string chan);
 		void sendPart(std::string chan, std::string msg);
-		void sendMsg(std::string dest, std::string msg);
 	public:
 		Connection();
 		~Connection();
@@ -43,6 +42,8 @@ class Connection {
 		bool isConnected() const;		// Are we currently connected to the server
 		std::string getServerName() const;	// Get the ID of the server we're connected to
 		bool isChannel(std::string channel) const;	// is this a channel we've joined
+		void sendMsg(std::string dest, std::string msg);
+		void sendNotice(std::string dest, std::string msg);
 	protected:
 
 };

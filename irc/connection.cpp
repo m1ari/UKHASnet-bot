@@ -144,7 +144,9 @@ namespace irc {
 		}
 		regex_t r_quit;
 		//:mfa298!~mfa298@gateway.yapd.net QUIT :Ping timeout: 252 seconds
-		if ( (r=regcomp(&r_quit, ":(.+) QUIT ([^:]+) :(.*)", REG_EXTENDED)) != 0){
+		//:bertrik!~quassel@ip117-49-211-87.adsl2.static.versatel.nl QUIT :Changing host	- Failed
+		//:mfa298!~mfa298@gateway.yapd.net QUIT :*.net *.split					- Netsplit
+		if ( (r=regcomp(&r_quit, ":(.+) QUIT :(.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
 			regerror(r,&r_quit,buffer,100);
 			fprintf(stderr, "Error: Compiling PART Regex(%d):\n\t%s\n", r, buffer);
@@ -340,6 +342,15 @@ namespace irc {
 	}
 
 	void Connection::sendMsg(std::string dest, std::string msg){
+		//https://tools.ietf.org/html/rfc2812#section-3.3.1
+		char buffer[101];
+		snprintf(buffer,101,"PRIVMSG %s :%s\r\n",dest.c_str(),msg.c_str());
+		sendBuffer(buffer, strlen(buffer));
+	}
+	void Connection::sendNotice(std::string dest, std::string msg){
+		char buffer[101];
+		snprintf(buffer,101,"NOTICE %s :%s\r\n",dest.c_str(),msg.c_str());
+		sendBuffer(buffer, strlen(buffer));
 	}
 
 	void Connection::setServer(Server in){
