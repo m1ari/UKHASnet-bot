@@ -85,13 +85,23 @@ namespace UKHASnet {
 
 				// TODO Ideally this should be managed via a map created by functions registering themselves
 				if (msg.getText().find("!help") == 0){
-					std::cout << "Handler: Got help request" << std::endl;
+					std::cout << "Help(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!node") == 0){
-					std::cout << "Handler: Got Node request" << std::endl;
+					std::cout << "Node(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!follow") == 0){
-					std::cout << "Handler: Got Follow request" << std::endl;
+					std::cout << "Follow(" << msg.getNick() << "): " << msg.getText() << std::endl;
+				} else if (msg.getText().find("!seen") == 0){
+					std::cout << "Seen(" << msg.getNick() << "): " << msg.getText() << std::endl;
+				} else if (msg.getText().find("!tell") == 0){
+					std::cout << "Tell(" << msg.getNick() << "): " << msg.getText() << std::endl;
+				} else if (msg.getText().find("!pub") == 0){
+					std::cout << "Pub(" << msg.getNick() << "): " << msg.getText() << std::endl;
+					//msg.getServer()->sendNotice(msg.getDest(),"Hic!");
+					msg.reply("hic!",true);	// Sent as Notice
+				} else if (msg.getText().find("!chippy") == 0){
+					std::cout << "Chippy(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!admin") == 0){
-					std::cout << "Handler: Got Admin request" << std::endl;
+					std::cout << "Admin(" << msg.getNick() << "): " << msg.getText() << std::endl;
 					// Todo Check authorised user (from config ??)
 					// Get 2nd keyword
 					// listserv	(lists known servers and state)
