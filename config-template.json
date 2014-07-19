@@ -1,4 +1,11 @@
 {
+	"database": {
+		"host": "db.host.com",
+		"database": "database",
+		"user": "username",
+		"password": "pa55w0rd"
+	},
+
 	"irc": {
 		"network1": {
 			"server": "hostname.network1",

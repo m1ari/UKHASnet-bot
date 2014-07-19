@@ -147,6 +147,35 @@ namespace UKHASnet {
 		return out;
 	}
 
+
+	std::map<std::string, std::string> Config::getDBConf() const {
+		std::map<std::string, std::string> out;
+		json_t *obj=NULL;
+		json_t *item=NULL;
+		if (json!=NULL){
+			obj=json_object_get(json,"database");
+			if (json_is_object(obj)){
+				item=json_object_get(obj,"host");
+				if(json_is_string(item)){
+					out["host"] = json_string_value(item);
+				}
+				item=json_object_get(obj,"user");
+				if(json_is_string(item)){
+					out["user"] = json_string_value(item);
+				}
+				item=json_object_get(obj,"password");
+				if(json_is_string(item)){
+					out["password"] = json_string_value(item);
+				}
+				item=json_object_get(obj,"database");
+				if(json_is_string(item)){
+					out["database"] = json_string_value(item);
+				}
+			}
+		}
+		return out;
+	}
+
 	std::string Config::getString(int count, ... ) const {
 		json_t *obj=NULL;
 		std::string ret;

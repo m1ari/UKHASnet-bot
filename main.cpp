@@ -9,6 +9,7 @@
 #include "irc/server.h"
 #include "config.h"
 #include "handler.h"
+#include "database.h"
 
 
 using namespace UKHASnet;
@@ -35,6 +36,16 @@ int main(int argc, char **argv){
 	Config conf;
 	conf.setFile("config.json");
 	conf.loadConfig();
+
+	// Connect to the database
+	Database db;
+	std::map<std::string, std::string> db_conf = conf.getDBConf();
+	db.setDBHost(db_conf["host"]);
+	db.setDBUser(db_conf["user"]);
+	db.setDBPass(db_conf["password"]);
+	db.setDatabase(db_conf["database"]);
+	db.connect();
+
 
 	// Setup handler process
 	Handler h;

@@ -4,6 +4,7 @@
 #include <jansson.h>
 #include <string>
 #include <list>
+#include <map>
 #include "irc/server.h"
 
 namespace UKHASnet {
@@ -31,6 +32,8 @@ class Config {
 		std::list<std::string> getIRCChannels(std::string server) const;
 		//void addIRCChannel(std::string server, std::string channel);
 		//void delIRCChannel(std::string server, std::string channel);
+
+		std::map<std::string, std::string> getDBConf() const;
 
 		std::string getString(int count, ... ) const;
 		//std::string getArray(int count, ... ) const;
