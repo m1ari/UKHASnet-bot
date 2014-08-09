@@ -6,7 +6,7 @@
 //#include <unistd.h>
 #include "database.h"
 //#include "irc/server.h"
-#include "irc/message.h"
+#include "../irc/message.h"
 
 namespace UKHASnet {
 	// Static vars

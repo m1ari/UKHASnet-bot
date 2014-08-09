@@ -8,7 +8,7 @@
 #include <pqxx/pqxx>
 //#include <pthread.h>
 //#include "irc/connection.h"
-#include "irc/message.h"
+#include "../irc/message.h"
 //#include "logger.h"
 
 namespace UKHASnet {
