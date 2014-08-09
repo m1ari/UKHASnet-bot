@@ -72,7 +72,7 @@ namespace UKHASnet {
 		}
 		//port=5432
 
-		std::cout << "DB Connection string: " << dbh_connect << std::endl;
+		// TODO Need to add some tests around this 
 		pqxx::connection dbh(dbh_connect);
 
 		connected=true;
@@ -85,7 +85,51 @@ namespace UKHASnet {
 	}
 
 
-	bool Database::sendMessage(irc::Message src, std::string text){
+	bool Database::sendMessage(irc::Message msg){
+		/* DB method for !msg IRC commands
+		 * !msg node@gateway Message
+		 */ 
+
+		//std::cout << "Message From: " << msg.getNick() << " in Channel " << msg.getDest() << " Reads: " << msg.getText() << std::endl;
+
+		std::string data=msg.getText();
+		size_t p;
+		std::string node;
+		std::string gateway;
+
+		// Check the string starts with !msg and strip it out
+		if (data.find("!msg ") == 0){
+			data.erase(0,5);
+		} else {
+			std::cout << "Error: Database was given a bad string to parse" << std::endl;
+		}
+
+		// Get node
+		p=data.find("@");
+		if (p != std::string::npos){
+			node=data.substr(0,p);
+			data.erase(0,p+1);
+		} else {
+			std::cout << "Error: Database(sendMessage) Can't determine node to send to" << std::endl;
+		}
+
+		// get gateway
+		p=data.find(" ");
+		if (p != std::string::npos){
+			gateway=data.substr(0,p);
+			data.erase(0,p+1);
+		} else {
+			std::cout << "Error: Database(sendMessage) Can't determine gateway to send to" << std::endl;
+		}
+
+		std::cout << "Processing: " << "Node:" << node << " Gateway: " << gateway << " Data: " << data << std::endl;
+		/*
+		pqxx::work w(dbh, "msg");  
+		w.exec("INSERT INTO ukhasnet.messages (from) VALUES ('Ljubljana');");  
+		w.commit(); 
+		
+		INSERT INTO ukhasnet.irc_msg values (timestamp, nick, chan, node, gateway, message) values ();
+		*/
 		return false;
 	}
 

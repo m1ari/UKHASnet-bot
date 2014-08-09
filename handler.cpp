@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unistd.h>
 #include "handler.h"
+#include "database.h"
 #include "irc/server.h"
 #include "irc/message.h"
 
@@ -36,6 +37,7 @@ namespace UKHASnet {
 	void Handler::mainLoop(){
 		printf("Handler process started\n");
 		irc::Message msg;
+		Database db;
 		while (run){
 			pthread_mutex_lock(&mutex);
 			if (messages.empty()){
@@ -101,6 +103,10 @@ namespace UKHASnet {
 					msg.reply("hic!",true);	// Sent as Notice
 				} else if (msg.getText().find("!chippy") == 0){
 					std::cout << "Chippy(" << msg.getNick() << "): " << msg.getText() << std::endl;
+				} else if (msg.getText().find("!msg") == 0){
+					// !msg name@gateway Message - Used for the conference badges
+					db.sendMessage(msg);
+					std::cout << "Msg(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!admin") == 0){
 					std::cout << "Admin(" << msg.getNick() << "): " << msg.getText() << std::endl;
 					// Todo Check authorised user (from config ??)

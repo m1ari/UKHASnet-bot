@@ -35,7 +35,7 @@ class Database {
 		bool connect();
 		bool isConnected() const;
 
-		bool sendMessage(irc::Message src, std::string text);
+		bool sendMessage(irc::Message msg);
 		bool getNode(irc::Message src, std::string text);
 
 	protected:
