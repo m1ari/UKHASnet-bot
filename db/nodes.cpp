@@ -1,7 +1,7 @@
 #include <string>
 #include <jansson.h>
 #include <ctime>
-#include "../database.h"
+#include "database.h"
 #include "nodes.h"
 
 

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <unistd.h>
 #include "handler.h"
-#include "database.h"
+#include "db/database.h"
 #include "irc/server.h"
 #include "irc/message.h"
 

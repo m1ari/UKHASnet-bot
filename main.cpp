@@ -9,7 +9,7 @@
 #include "irc/server.h"
 #include "config.h"
 #include "handler.h"
-#include "database.h"
+#include "db/database.h"
 
 
 using namespace UKHASnet;
