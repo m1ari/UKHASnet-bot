@@ -1,21 +1,21 @@
 #ifndef database_h_
 #define database_h_
 
-// #define __db_handler		// Code for the threaded Handler for notify events
 
-//#include <queue>
-//#include <map>
 #include <pqxx/pqxx>
-//#include <pthread.h>
-//#include "irc/connection.h"
 #include "../irc/message.h"
-//#include "logger.h"
 
 namespace UKHASnet {
 
+namespace db{
+	class Nodes;
+}
+
 class Database {
+	// TODO Should we use inheritance instead
+	friend class db::Nodes;
 	private:
-		static pqxx::connection dbh;
+		static pqxx::connection *dbh;
 		static bool connected;
 
 		std::string dbhost;

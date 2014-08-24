@@ -8,12 +8,15 @@
 //#include "irc/server.h"
 #include "../irc/message.h"
 
+// Some good bits in https://github.com/radiowarwick/digiplay_legacy/blob/master/src/DbTrigger.cpp
+
 namespace UKHASnet {
 	// Static vars
-	//pqxx::connection Database::dbh = NULL;
+	pqxx::connection *Database::dbh = NULL;
 	bool Database::connected=false;
 
 	Database::Database(){
+		// TODO We need to track instances
 	}
 
 	Database::Database(std::string h, std::string u, std::string p, std::string d){
@@ -25,6 +28,9 @@ namespace UKHASnet {
 	}
 
 	Database::~Database(){
+		// TODO when instances =0 
+		// delete dbh;
+
 	}
 
 	void Database::setDBHost(std::string h){
@@ -73,7 +79,7 @@ namespace UKHASnet {
 		//port=5432
 
 		// TODO Need to add some tests around this 
-		pqxx::connection dbh(dbh_connect);
+		dbh = new pqxx::connection(dbh_connect);
 
 		connected=true;
 
