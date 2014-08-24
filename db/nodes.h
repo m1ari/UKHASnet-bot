@@ -1,3 +1,7 @@
+/* db/Nodes
+ * class for talking the the nodes table in the database
+ */
+
 #ifndef db_nodes_h_
 #define db_nodes_h_
 
