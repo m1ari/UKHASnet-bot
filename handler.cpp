@@ -98,9 +98,9 @@ namespace UKHASnet {
 				} else if (msg.getText().find("!tell") == 0){
 					std::cout << "Tell(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!pub") == 0){
-					std::cout << "Pub(" << msg.getNick() << "): " << msg.getText() << std::endl;
-					//msg.getServer()->sendNotice(msg.getDest(),"Hic!");
-					msg.reply("hic!",true);	// Sent as Notice
+					msg.reply("hic!",true);
+				} else if (msg.getText().find("test") == 0){
+					msg.reply(msg.getNick() + ": Achievement unlocked: you have joined #ukhasnet",true);
 				} else if (msg.getText().find("!chippy") == 0){
 					std::cout << "Chippy(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!msg") == 0){
