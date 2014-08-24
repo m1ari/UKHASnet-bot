@@ -42,15 +42,15 @@ namespace irc {
 	void Message::reply(std::string s, bool privmsg) const {
 		if (server->isChannel(dest)){
 			if (privmsg){
-				server->sendMsg(dest,"Hic!");
+				server->sendMsg(dest,s);
 			} else {
-				server->sendNotice(dest,"Hic!");
+				server->sendNotice(dest,s);
 			}
 		} else {
 			if (privmsg){
-				server->sendMsg(nick,"Hic!");
+				server->sendMsg(nick,s);
 			} else {
-				server->sendNotice(nick,"Hic!");
+				server->sendNotice(nick,s);
 			}
 		}
 	}
