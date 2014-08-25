@@ -37,7 +37,7 @@ namespace db {
 				node2id[s_node]=id;
 				return id;
 			} else {
-				std::cout << "Bad result size in Nodes::getNodeID " << res.size() << std::endl;
+				std::cout << "Bad result size in Nodes::getNodeID looking for " << s_node << " Got " << res.size() << std::endl;
 			}
 		}
 		return 0;
@@ -55,8 +55,14 @@ namespace db {
 		if (node.size() != 1 ){
 			return "Unable to get Node info";
 		}
+
 		nodename=node[0]["name"].c_str();
-		lastpacket=node[0]["lastpacket"].as<int>();
+		if (node[0]["lastpacket"].is_null()){
+			return "Unable to find most recent packet for " + nodename;
+			// TODO We could query for the most recent packet the hard way in this case.
+		} else {
+			lastpacket=node[0]["lastpacket"].as<int>();
+		}
 
 		// Get Pakcet
 		pqxx::result packet=txn.exec("select * from ukhasnet.packet where id=" + txn.quote(lastpacket));
