@@ -118,6 +118,7 @@ namespace irc {
 			fprintf(stderr, "Error: Compiling PRIVMSG Regex(%d):\n\t%s\n", r, buffer);
 			return;
 		}
+		// TODO Handle NOTICE
 		regex_t r_join;
 		//:mfa298!~mfa298@gateway.yapd.net JOIN #ukhasnet
 		if ( (r=regcomp(&r_join, ":(.+) JOIN (.*)", REG_EXTENDED)) != 0){
@@ -343,13 +344,13 @@ namespace irc {
 
 	void Connection::sendMsg(std::string dest, std::string msg){
 		//https://tools.ietf.org/html/rfc2812#section-3.3.1
-		char buffer[101];
-		snprintf(buffer,101,"PRIVMSG %s :%s\r\n",dest.c_str(),msg.c_str());
+		char buffer[500];
+		snprintf(buffer,500,"PRIVMSG %s :%s\r\n",dest.c_str(),msg.c_str());
 		sendBuffer(buffer, strlen(buffer));
 	}
 	void Connection::sendNotice(std::string dest, std::string msg){
-		char buffer[101];
-		snprintf(buffer,101,"NOTICE %s :%s\r\n",dest.c_str(),msg.c_str());
+		char buffer[500];
+		snprintf(buffer,500,"NOTICE %s :%s\r\n",dest.c_str(),msg.c_str());
 		sendBuffer(buffer, strlen(buffer));
 	}
 
