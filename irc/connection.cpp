@@ -25,6 +25,7 @@ namespace irc {
 	Connection::Connection() {
 		run=false;
 		connected=false;
+		sockfd=0;
 	};
 	Connection::~Connection() {
 	};
@@ -49,61 +50,8 @@ namespace irc {
 	void Connection::mainLoop(){
 		// TODO we should check required variables are set, if not cylce around until they are.
 		//		As minimum we need to know Server, User and Nick
-		// TODO We need to handle server disconnects and bad addresses in the list from gethostbyname
 
 		log.setName(s.getName());
-
-		struct sockaddr_in dest;
-		struct hostent *he;
-
-		if ((sockfd = socket(AF_INET,SOCK_STREAM, 0)) < 0 ){
-			perror("Error(irc::Connection)");
-			return;
-		}
-
-		if ((he=gethostbyname(s.getServer().c_str())) == NULL ) {
-			perror("Error(irc::Connection)");
-			return;
-		}
-
-		memset(&dest, 0, sizeof(dest));
-		dest.sin_family=AF_INET;
-		dest.sin_port=htons(6667);
-		memcpy(&dest.sin_addr.s_addr,he->h_addr_list[0],sizeof(dest.sin_addr.s_addr));
-
-		char ip[INET_ADDRSTRLEN];
-		memset(&ip,0,sizeof(ip));
-
-		inet_ntop(AF_INET,&dest.sin_addr,ip,sizeof(ip));
-		printf("Connecting to %s:%d\n",ip,ntohs(dest.sin_port));
-		if (::connect(sockfd, (struct sockaddr *)&dest, sizeof(dest))<0){
-			perror("Error(irc::Connection)");
-			return;
-		}
-
-		// set socket to non blocking
-		struct timeval tv;
-		tv.tv_sec = 0;
-		tv.tv_usec = 100 * 1000;
-		if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
-			perror("Error(irc::Connection)");
-			return;
-		}
-
-		printf("Connected \n");
-
-		sendNick();
-		sendUser();
-		//sendPassword();
-		// TODO Join Channels in Channel list
-
-		//unsigned int counter=0;
-
-		std::string buffer;	// Buffer to work with
-		char readbuff[513];	// read Buffer	(max line is 512)
-		int bytes;		// Number of bytes read
-
-
 
 		// Setup Regular Expressions to match
 		// With C++11 we could use stl::regex instead
@@ -169,6 +117,14 @@ namespace irc {
 			return;
 		}
 
+		// Network Connection variables
+		struct sockaddr_in dest;
+		struct hostent *he;
+		int bytes=0;		// Number of bytes read
+
+		std::string buffer;	// Buffer to work with
+		char readbuff[513];	// read Buffer	(max line is 512)
+
 		// Main Matches
 		const int n_matches=6;
 		regmatch_t matches[n_matches];
@@ -178,13 +134,64 @@ namespace irc {
 
 		Handler h(this);	// Access to the Handler thread (allows the handler to call back to this connection
 		while (run){
-			// TODO Move (some) connection stuff inside this loop
+			// If bytes = 0 then (re) connect to IRC
+			if (bytes == 0 ){
+				// Determin if there was an open socket
+				if (sockfd != 0 ){
+					close(sockfd);
+				}
 
-			memset(readbuff,0,513);
-			bytes=read(sockfd,readbuff,512);
-			if (bytes>0){
-				buffer+=readbuff;
+				if ((sockfd = socket(AF_INET,SOCK_STREAM, 0)) < 0 ){
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+				if ((he=gethostbyname(s.getServer().c_str())) == NULL ) {
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+				memset(&dest, 0, sizeof(dest));
+				dest.sin_family=AF_INET;
+				dest.sin_port=htons(6667);
+				memcpy(&dest.sin_addr.s_addr,he->h_addr_list[0],sizeof(dest.sin_addr.s_addr));
+
+				char ip[INET_ADDRSTRLEN];
+				memset(&ip,0,sizeof(ip));
+
+				inet_ntop(AF_INET,&dest.sin_addr,ip,sizeof(ip));
+				printf("Connecting to %s:%d\n",ip,ntohs(dest.sin_port));
+				if (::connect(sockfd, (struct sockaddr *)&dest, sizeof(dest))<0){
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+				// set socket to non blocking
+				struct timeval tv;
+				tv.tv_sec = 0;
+				tv.tv_usec = 100 * 1000;
+				if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+				printf("Connected \n");
+
+				sendNick();
+				sendUser();
+				//sendPassword();
+				// TODO Join Channels in Channel list
 			}
+
+			// Only read if we have a connected socket
+			if (sockfd > 0){
+				memset(readbuff,0,513);
+				bytes=read(sockfd,readbuff,512);
+				if (bytes>0){
+					buffer+=readbuff;
+				}
+			}
+
 			// TODO Handle bytes == 0 (Socket Closed)
 			// TODO Handle bytes < 0 (Error)
 			std::string line;
@@ -344,11 +351,13 @@ namespace irc {
 
 	void Connection::sendMsg(std::string dest, std::string msg){
 		//https://tools.ietf.org/html/rfc2812#section-3.3.1
+		// TODO We should set buffer length based on size of msg
 		char buffer[500];
 		snprintf(buffer,500,"PRIVMSG %s :%s\r\n",dest.c_str(),msg.c_str());
 		sendBuffer(buffer, strlen(buffer));
 	}
 	void Connection::sendNotice(std::string dest, std::string msg){
+		// TODO We should set buffer length based on size of msg
 		char buffer[500];
 		snprintf(buffer,500,"NOTICE %s :%s\r\n",dest.c_str(),msg.c_str());
 		sendBuffer(buffer, strlen(buffer));
