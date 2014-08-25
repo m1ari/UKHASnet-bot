@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "handler.h"
 #include "db/database.h"
+#include "db/nodes.h"
 #include "irc/server.h"
 #include "irc/message.h"
 
@@ -89,8 +90,15 @@ namespace UKHASnet {
 				// TODO Ideally this should be managed via a map created by functions registering themselves
 				if (msg.getText().find("!help") == 0){
 					std::cout << "Help(" << msg.getNick() << "): " << msg.getText() << std::endl;
-				} else if (msg.getText().find("!node") == 0){
+				} else if (msg.getText().find("!node ") == 0){
+					db::Nodes n;
 					std::cout << "Node(" << msg.getNick() << "): " << msg.getText() << std::endl;
+					std::string data=msg.getText();
+					data.erase(0,6);
+					size_t p = data.find_first_of("\r\n ");
+					data.erase(p);
+
+					msg.reply(n.getNodeLastPacket(data));
 				} else if (msg.getText().find("!follow") == 0){
 					std::cout << "Follow(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!seen") == 0){
