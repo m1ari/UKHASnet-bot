@@ -10,6 +10,7 @@
 #include <typeinfo>
 #include <pthread.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -174,6 +175,37 @@ namespace irc {
 					perror("Error(irc::Connection)");
 					return;
 				}
+
+				// Enable Keepalives
+				int enable=1;
+				if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+				// Time to wait before sending Keepalives	(tcp_keepalive_time)
+				enable=60;
+				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+				// Time between probes 				(tcp_keepalive_intvl)
+				enable=5;
+				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+				// Number of un-acked probes before closing 	(tcp_keepalive_probes)
+				enable=4;
+				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection)");
+					return;
+				}
+
+
+				// SOL_TCP and TCP_KEEPCNT, TCP_KEEPIDLE, TCP_KEEPINTVL
 
 				printf("Connected \n");
 
