@@ -16,6 +16,9 @@ all: $(TARGETS)
 bot: $(OBJS) $(IRC_OBJS) $(DB_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
+%.o: %.cpp %.h Makefile
+	$(CXX) -c $(CFLAGS) -o $@ $<
+
 $(IRC_OBJS): %.o: %.cpp %.h Makefile
 	$(CXX) -c $(CFLAGS) -o $@ $<
 
