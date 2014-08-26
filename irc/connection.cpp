@@ -133,6 +133,8 @@ namespace irc {
 		const int n_umatches=4;
 		regmatch_t umatches[n_umatches];
 
+		int nickdashes=0;	// Number of dashes to add to nick if there's a clash
+
 		Handler h(this);	// Access to the Handler thread (allows the handler to call back to this connection
 		while (run){
 			// If bytes = 0 then (re) connect to IRC
@@ -204,9 +206,6 @@ namespace irc {
 					return;
 				}
 
-
-				// SOL_TCP and TCP_KEEPCNT, TCP_KEEPIDLE, TCP_KEEPINTVL
-
 				printf("Connected \n");
 
 				sendNick();
@@ -214,6 +213,8 @@ namespace irc {
 				//sendPassword();
 				// TODO Join Channels in Channel list
 			}
+
+			// TODO If ndashes >0 and a suiable time has passed see if we can change to our default nick
 
 			// Only read if we have a connected socket
 			if (sockfd > 0){
@@ -224,7 +225,6 @@ namespace irc {
 				}
 			}
 
-			// TODO Handle bytes == 0 (Socket Closed)
 			// TODO Handle bytes < 0 (Error)
 			std::string line;
 			std::string::iterator pos;
@@ -288,6 +288,9 @@ namespace irc {
 						case 376:	// RPL_ENDOFMOTD
 							// MOTD - Do Nothing
 						break;
+						case 433: 	// 433 * <NICK> :Nickname is already in use.
+							sendNick(++nickdashes);
+						break;
 						default:
 							std::cout << "NUM(" << num << "): " << line << std::endl;
 						break;
@@ -345,9 +348,14 @@ namespace irc {
 */
 	}
 
-	void Connection::sendNick(){
+	void Connection::sendNick(int ndash){
 		char buffer[101];
-		snprintf(buffer,101,"NICK %s\r\n",s.getNick().c_str());
+		char dashes[20];
+		memset(dashes,0,20);
+		for (int i=0; i<ndash; i++){
+			dashes[i]='_';
+		}
+		snprintf(buffer,101,"NICK %s%s\r\n",s.getNick().c_str(),dashes);
 		sendBuffer(buffer, strlen(buffer));
 	}
 

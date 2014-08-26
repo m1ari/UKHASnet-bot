@@ -22,7 +22,7 @@ class Connection {
 		static void* entryPoint(void *pthis);
 		void mainLoop();
 		void sendBuffer(const char* buf, size_t length);
-		void sendNick();
+		void sendNick(int ndash=0);
 		void sendUser();
 		void sendPong(std::string req);
 		void sendJoin(std::string chan);
