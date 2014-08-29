@@ -69,6 +69,7 @@ Ideally functions will be stored in their own classes allowing for easy extensio
 sudo apt-get install g++
 sudo apt-get install make
 sudo apt-get install libjansson-dev
+sudo apt-get install libpqxx3-dev libpqxx-3.1
 
 Note that this requires at least Jansson 2.3 (Ubuntu 12.04 has Jansson 2.2)
 
