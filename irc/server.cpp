@@ -1,5 +1,6 @@
+#include <iostream>
 #include "server.h"
-//#include "channel.h"
+#include "channel.h"
 
 namespace UKHASnet {
 namespace irc {
@@ -63,23 +64,26 @@ namespace irc {
 		return connect;
 	}
 
-
-	// The following functions should change to use the Channel object at a later date
 	void Server::addChannel(std::string c){
-		channels.insert(c);
+		// TODO Test if channel exists
+		channels[c]=Channel(c);
 	}
 
 	void Server::delChannel(std::string c){
-		channels.erase(c);
+		std::cout << "TODO Server::delChannel(" << c << ")" << std::endl;
+		// TODO Remove channel from list (or mark as non joinable)
 	}
 	size_t Server::getNumChannels() const {
 		return channels.size();
 	}
-/*
-	Channel Server::getChannel(int n) const {
-		return channels.at(n);
+	std::list<std::string> Server::getChannels() {
+		std::list<std::string> chans;
+		for (std::map<std::string, Channel>::iterator it=channels.begin(); it!=channels.end(); ++it) {
+			std::cout << "Adding: " << it->first << " to channel list" << std::endl;
+			chans.push_back(it->first);
+		}
+		return chans;
 	}
-*/
 	bool Server::isChannel(std::string s) const {
 		if (channels.find(s) != channels.end()){
 			return true;

@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <list>
 #include "../handler.h"
 #include "../logger.h"
 #include "connection.h"
@@ -137,13 +138,18 @@ namespace irc {
 
 		Handler h(this);	// Access to the Handler thread (allows the handler to call back to this connection
 		while (run){
-			// If bytes = 0 then (re) connect to IRC
+			// bytes == 0 indicated the connection has been closed so clean things up
 			if (bytes == 0 ){
 				// Determin if there was an open socket
 				if (sockfd != 0 ){
 					close(sockfd);
+					connected=false;
+					sockfd=0;
 				}
+			}
 
+			// sockfd==0 indicates we don't have a valid connection so connect
+			if (sockfd==0){
 				if ((sockfd = socket(AF_INET,SOCK_STREAM, 0)) < 0 ){
 					perror("Error(irc::Connection)");
 					return;
@@ -211,7 +217,6 @@ namespace irc {
 				sendNick();
 				sendUser();
 				//sendPassword();
-				// TODO Join Channels in Channel list
 			}
 
 			// TODO If ndashes >0 and a suiable time has passed see if we can change to our default nick
@@ -268,7 +273,15 @@ namespace irc {
 					switch (num) {
 						case 1:		// RPL_WELCOME
 							connected=true;
-							// TODO go through channels and join if we havn't already
+							// TODO Join Channels in Channel list
+							{
+							std::list<std::string> chans;
+							chans=s.getChannels();
+							for (std::list<std::string>::iterator it=chans.begin(); it!=chans.end(); ++it){
+								sendJoin(*it);
+							}
+							}
+						break;
 						case 2:		// RPL_YOURHOST
 						case 3:		// RPL_CREATED
 						case 4:		// RPL_MYINFO
@@ -321,7 +334,6 @@ namespace irc {
 	void Connection::sendBuffer(const char* buf, size_t length){
 		log.writeLog("TX", buf);
 		send(sockfd, buf, length, 0);
-
 	}
 
 	void Connection::disconnect(){
@@ -374,8 +386,11 @@ namespace irc {
 	void Connection::sendJoin(std::string chan){
 		char buffer[101];
 		if (connected == true){
+			std::cout << "Joining: " << chan << std::endl;
 			snprintf(buffer,101,"JOIN %s\r\n", chan.c_str());
 			sendBuffer(buffer, strlen(buffer));
+		} else {
+			std::cout << "Unable to Join " << chan << std::endl;
 		}
 	}
 

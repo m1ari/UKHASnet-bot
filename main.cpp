@@ -56,7 +56,6 @@ int main(int argc, char **argv){
 	std::list<std::string> ircServers;
 	ircServers = conf.getIRCServerList();
 
-
 	// Iterate over the list of Servers
 	std::map<std::string, irc::Connection> ircConnections;
 	for (std::list<std::string>::iterator it = ircServers.begin(); it != ircServers.end(); it++){
@@ -70,18 +69,12 @@ int main(int argc, char **argv){
 		if (s.getConnect()==true){
 			// Start new thread and Connect to server
 			ircConnections[*it].connect();
-			// TODO Once connection process remembers channels
-			// and auto connects we won't need to wait here
-			while (!ircConnections[*it].isConnected()){
-				sleep (1);
-			}
 		}
 
 		// Get list of channels for the server
 		std::list<std::string> channels;
 		channels=conf.getIRCChannels(*it);
 		for (std::list<std::string>::iterator it2 = channels.begin(); it2 != channels.end(); it2++){
-			std::cout << "Joining " << *it2 << std::endl;
 			ircConnections[*it].join(*it2);
 		}
 	}
