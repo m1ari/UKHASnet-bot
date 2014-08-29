@@ -8,7 +8,8 @@ LIBS=-lpthread -ljansson -lpqxx -lpq
 
 OBJS=main.o config.o handler.o logger.o
 DB_OBJS=db/database.o db/nodes.o
-IRC_OBJS=irc/connection.o irc/server.o irc/message.o # irc/member.o irc/channel.o
+IRC_OBJS=irc/connection.o irc/server.o irc/message.o irc/channel.o
+# irc/member.o
 TARGETS=bot
 
 all: $(TARGETS)
