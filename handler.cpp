@@ -90,6 +90,7 @@ namespace UKHASnet {
 				// TODO Ideally this should be managed via a map created by functions registering themselves
 				if (msg.getText().find("!help") == 0){
 					std::cout << "Help(" << msg.getNick() << "): " << msg.getText() << std::endl;
+					msg.reply(msg.getNick() + ": Please see http://www.ukhas.net/wiki/ircbot",true);
 				} else if (msg.getText().find("!node ") == 0){
 					db::Nodes n;
 					std::cout << "Node(" << msg.getNick() << "): " << msg.getText() << std::endl;
@@ -111,17 +112,31 @@ namespace UKHASnet {
 					msg.reply(msg.getNick() + ": Achievement unlocked: you have joined #ukhasnet",true);
 				} else if (msg.getText().find("!chippy") == 0){
 					std::cout << "Chippy(" << msg.getNick() << "): " << msg.getText() << std::endl;
+				} else if (msg.getText().find("!upload") == 0){
+					// !upload <ID>
+					//db.upload(msg);
+					std::cout << "Upload(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!msg") == 0){
 					// !msg name@gateway Message - Used for the conference badges
 					db.sendMessage(msg);
 					std::cout << "Msg(" << msg.getNick() << "): " << msg.getText() << std::endl;
-				} else if (msg.getText().find("!admin") == 0){
-					std::cout << "Admin(" << msg.getNick() << "): " << msg.getText() << std::endl;
-					// Todo Check authorised user (from config ??)
-					// Get 2nd keyword
-					// listserv	(lists known servers and state)
-					// connect <serv>
-					// disco <serv>
+				} else if (msg.getText().find("!admin ") == 0){
+					// TODO This should be based on the config file or DB lookup
+					if (msg.getNick()=="mfa298"){
+						std::cout << "Admin Auth(" << msg.getNick() << "): " << msg.getText() << std::endl;
+						std::string data=msg.getText().substr(7);
+						std::cout << "Admin Processing " << data << std::endl;
+						if (data.find("nick ") == 0){
+							data.erase(0,5);
+							std::cout << "Admin setting NICK to " << data << std::endl;
+							msg.getServer()->setNick(data);
+						}
+						// listserv	(lists known servers and state)
+						// connect <serv>
+						// disco <serv>
+					} else {
+						std::cout << "Admin Bad (" << msg.getNick() << "): " << msg.getText() << std::endl;
+					}
 				} else {
 					std::cout << "Handler: Processing " << msg.getNick() << ": " << msg.getText() << std::endl;
 				}
