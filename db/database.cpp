@@ -147,14 +147,12 @@ namespace UKHASnet {
 		data.erase(p);
 
 		// TODO we should test it's a number 
-		std::cout << "getUpload looking for " << data << std::endl;
 
 		// query ukhasnet.upload for id
 		pqxx::work txn(*dbh, "getupload");
 		pqxx::result upload = txn.exec("select time, packet, rssi, name  from ukhasnet.upload left join ukhasnet.nodes on upload.nodeid=nodes.id where upload.id=" + txn.quote(data));
 		txn.commit();
 
-		std::cout << "getUpload: Query complete got: " << upload.size() << " rows back " << std::endl;
 		if (upload.size() != 1){
 			return "Unable to find uploaded packet with ID=" + data;
 		}
