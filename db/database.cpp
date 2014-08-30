@@ -4,6 +4,7 @@
 #include <iostream>
 #include <pqxx/pqxx>
 #include <string>
+#include <exception>
 //#include <unistd.h>
 #include "database.h"
 #include "nodes.h"
@@ -107,6 +108,8 @@ namespace UKHASnet {
 		std::string node;
 		std::string gateway;
 
+		// TODO we should possibly change to a regex in future
+
 		// Check the string starts with !msg and strip it out
 		if (data.find("!msg ") == 0){
 			data.erase(0,5);
@@ -136,25 +139,31 @@ namespace UKHASnet {
 			std::cout << "Error: Database(sendMessage) Can't determine gateway to send to" << std::endl;
 		}
 
-		std::cout << "Processing: " << "Node:" << node << " Gateway: " << gateway << " Data: " << data << std::endl;
-
-
 		db::Nodes n;
 		int nodeid=n.getNodeID(node);
 		int gatewayid=n.getNodeID(gateway);
 
-		pqxx::work txn(*dbh, "msg");
-		txn.prepared("irc_msg")(msg.getNick())(msg.getDest())(gatewayid)(nodeid)(data)("Pending").exec();
-		txn.commit();
-
-		return true;	// TODO Should determine if we actually put the data into the database
+		if ((nodeid > 0) && (gatewayid > 0)) {
+			try {
+				pqxx::work txn(*dbh, "msg");
+				txn.prepared("irc_msg")(msg.getNick())(msg.getDest())(gatewayid)(nodeid)(data)("Pending").exec();
+				txn.commit();
+				return true;
+			} catch (const std::exception &e) {
+				std::cerr << e.what() << std::endl;
+				//TODO Error Message
+				return false;
+			}
+		} else {
+			// Error Message
+			return false;
+		}
 	}
 
 	std::string Database::getUpload(irc::Message msg){
-		// Get upload ID from request
 		std::string data=msg.getText();
 
-		// Check the string starts with !msg and strip it out
+		// Check the string starts with !upload and strip it out
 		if (data.find("!upload ") == 0){
 			data.erase(0,8);
 		} else {
@@ -166,22 +175,25 @@ namespace UKHASnet {
 		size_t p = data.find_first_of("\r\n");
 		data.erase(p);
 
-		// query ukhasnet.upload for id
-		pqxx::work txn(*dbh, "getupload");
-		pqxx::result upload = txn.prepared("getUpload")(data).exec();
-		txn.commit();
-
-		if (upload.size() != 1){
-			return "Unable to find uploaded packet with ID=" + data;
-		}
-
-		// Create reply string
+		// Run the query and build up a reply if successful
 		std::string out;
-		out  = "Packet: " + upload[0]["packet"].as<std::string>();
-		out += " was recieved by " + upload[0]["name"].as<std::string>();
-		out += " at " + upload[0]["time"].as<std::string>();
-		out += " with rssi of " + upload[0]["rssi"].as<std::string>();
+		try {
+			pqxx::work txn(*dbh, "getupload");
+			pqxx::result upload = txn.prepared("getUpload")(data).exec();
+			txn.commit();
 
+			if (upload.size() != 1){
+				out = "Unable to find uploaded packet with ID=" + data;
+			} else {
+				out  = "Packet: " + upload[0]["packet"].as<std::string>();
+				out += " was recieved by " + upload[0]["name"].as<std::string>();
+				out += " at " + upload[0]["time"].as<std::string>();
+				out += " with rssi of " + upload[0]["rssi"].as<std::string>();
+			}
+		} catch (const std::exception &e) {
+			std::cerr << e.what() << std::endl;
+			out = "Unable to find uploaded packet with ID=" + data;
+		}
 		return out;
 	}
 
