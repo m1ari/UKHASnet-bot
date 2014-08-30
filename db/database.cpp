@@ -6,6 +6,7 @@
 #include <string>
 //#include <unistd.h>
 #include "database.h"
+#include "nodes.h"
 //#include "irc/server.h"
 #include "../irc/message.h"
 
@@ -84,6 +85,10 @@ namespace UKHASnet {
 
 		connected=true;
 
+		// Create prepared statements
+		dbh->prepare("getUpload", "select time, packet, rssi, name  from ukhasnet.upload left join ukhasnet.nodes on upload.nodeid=nodes.id where upload.id=$1;")("integer");
+		dbh->prepare("irc_msg", "INSERT INTO ukhasnet.irc_msg (src_nick, src_chan, gatewayid, nodeid, message, status) values ($1, $2, $3, $4, $5, $6);")("varchar", pqxx::prepare::treat_string)("varchar", pqxx::prepare::treat_string)("integer")("integer")("varchar", pqxx::prepare::treat_string)("varchar", pqxx::prepare::treat_string);
+
 		return connected;
 	}
 
@@ -97,8 +102,6 @@ namespace UKHASnet {
 		 * !msg node@gateway Message
 		 */ 
 
-		//std::cout << "Message From: " << msg.getNick() << " in Channel " << msg.getDest() << " Reads: " << msg.getText() << std::endl;
-
 		std::string data=msg.getText();
 		size_t p;
 		std::string node;
@@ -110,6 +113,10 @@ namespace UKHASnet {
 		} else {
 			std::cout << "Error: Database was given a bad string to parse" << std::endl;
 		}
+
+		// Trim from any NL/CR (they should only appear at end of line
+		p = data.find_first_of("\r\n");
+		data.erase(p);
 
 		// Get node
 		p=data.find("@");
@@ -130,27 +137,38 @@ namespace UKHASnet {
 		}
 
 		std::cout << "Processing: " << "Node:" << node << " Gateway: " << gateway << " Data: " << data << std::endl;
-		/*
-		pqxx::work w(dbh, "msg");  
-		w.exec("INSERT INTO ukhasnet.messages (from) VALUES ('Ljubljana');");  
-		w.commit(); 
-		
-		INSERT INTO ukhasnet.irc_msg values (timestamp, nick, chan, node, gateway, message) values ();
-		*/
-		return false;
+
+
+		db::Nodes n;
+		int nodeid=n.getNodeID(node);
+		int gatewayid=n.getNodeID(gateway);
+
+		pqxx::work txn(*dbh, "msg");
+		txn.prepared("irc_msg")(msg.getNick())(msg.getDest())(gatewayid)(nodeid)(data)("Pending").exec();
+		txn.commit();
+
+		return true;	// TODO Should determine if we actually put the data into the database
 	}
 
 	std::string Database::getUpload(irc::Message msg){
 		// Get upload ID from request
-		std::string data=msg.getText().substr(8);
+		std::string data=msg.getText();
+
+		// Check the string starts with !msg and strip it out
+		if (data.find("!upload ") == 0){
+			data.erase(0,8);
+		} else {
+			std::cout << "Error: Database was given a bad string to parse" << std::endl;
+			return "Unable to parse " + data;
+		}
+
+		// Trim from any NL/CR (they should only appear at end of line
 		size_t p = data.find_first_of("\r\n");
 		data.erase(p);
 
-		// TODO we should test it's a number 
-
 		// query ukhasnet.upload for id
 		pqxx::work txn(*dbh, "getupload");
-		pqxx::result upload = txn.exec("select time, packet, rssi, name  from ukhasnet.upload left join ukhasnet.nodes on upload.nodeid=nodes.id where upload.id=" + txn.quote(data));
+		pqxx::result upload = txn.prepared("getUpload")(data).exec();
 		txn.commit();
 
 		if (upload.size() != 1){
