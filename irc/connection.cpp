@@ -149,15 +149,55 @@ namespace irc {
 			}
 
 			// sockfd==0 indicates we don't have a valid connection so connect
+			// TODO We shouldn't return on failure anymore, just skip the rest of the connection section so we retry later
 			if (sockfd==0){
+				// Create Socket
 				if ((sockfd = socket(AF_INET,SOCK_STREAM, 0)) < 0 ){
-					perror("Error(irc::Connection)");
-					return;
+					perror("Error(irc::Connection-socket)");
+					goto noconnect;
 				}
 
+				// set socket to non blocking
+				struct timeval tv;
+				tv.tv_sec = 0;
+				tv.tv_usec = 100 * 1000;
+				if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+					perror("Error(irc::Connection-SO_RCVTIMEO)");
+					goto noconnect;
+				}
+
+				// Enable Keepalives
+				int enable=1;
+				if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection-SO_KEEPALIVE)");
+					goto noconnect;
+				}
+
+				// Time to wait before sending Keepalives	(tcp_keepalive_time)
+				enable=60;
+				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection-TCP_KEEPIDLE)");
+					goto noconnect;
+				}
+
+				// Time between probes 				(tcp_keepalive_intvl)
+				enable=5;
+				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection-TCP_KEEPINTVL)");
+					goto noconnect;
+				}
+
+				// Number of un-acked probes before closing 	(tcp_keepalive_probes)
+				enable=4;
+				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT,&enable,sizeof(enable)) < 0) {
+					perror("Error(irc::Connection-TCP_KEEPCNT)");
+					goto noconnect;
+				}
+
+				// Lookup hostname
 				if ((he=gethostbyname(s.getServer().c_str())) == NULL ) {
-					perror("Error(irc::Connection)");
-					return;
+					perror("Error(irc::Connection-hostname)");
+					goto noconnect;
 				}
 
 				memset(&dest, 0, sizeof(dest));
@@ -171,53 +211,16 @@ namespace irc {
 				inet_ntop(AF_INET,&dest.sin_addr,ip,sizeof(ip));
 				printf("Connecting to %s:%d\n",ip,ntohs(dest.sin_port));
 				if (::connect(sockfd, (struct sockaddr *)&dest, sizeof(dest))<0){
-					perror("Error(irc::Connection)");
-					return;
+					perror("Error(irc::Connection-connect)");
+					goto noconnect;
 				}
-
-				// set socket to non blocking
-				struct timeval tv;
-				tv.tv_sec = 0;
-				tv.tv_usec = 100 * 1000;
-				if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
-					perror("Error(irc::Connection)");
-					return;
-				}
-
-				// Enable Keepalives
-				int enable=1;
-				if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE,&enable,sizeof(enable)) < 0) {
-					perror("Error(irc::Connection)");
-					return;
-				}
-
-				// Time to wait before sending Keepalives	(tcp_keepalive_time)
-				enable=60;
-				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE,&enable,sizeof(enable)) < 0) {
-					perror("Error(irc::Connection)");
-					return;
-				}
-
-				// Time between probes 				(tcp_keepalive_intvl)
-				enable=5;
-				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL,&enable,sizeof(enable)) < 0) {
-					perror("Error(irc::Connection)");
-					return;
-				}
-
-				// Number of un-acked probes before closing 	(tcp_keepalive_probes)
-				enable=4;
-				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT,&enable,sizeof(enable)) < 0) {
-					perror("Error(irc::Connection)");
-					return;
-				}
-
 				printf("Connected \n");
 
 				sendNick();
 				sendUser();
 				//sendPassword();
 			}
+			noconnect:
 
 			// TODO If ndashes >0 and a suiable time has passed see if we can change to our default nick
 
