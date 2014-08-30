@@ -19,7 +19,6 @@ namespace db {
 	}
 	
 	int Nodes::getNodeID(std::string node){
-		// TODO Check node is safe
 		std::string s_node = node;
 
 		if (node2id.count(s_node) >0){
@@ -27,8 +26,7 @@ namespace db {
 		} else {
 			Database db;
 			pqxx::work txn(*db.dbh, "getid");
-			pqxx::result res=txn.exec("select id from ukhasnet.nodes where name=" + txn.quote(s_node) );
-			// TODO use txn.esc(node) instead ?
+			pqxx::result res=txn.prepared("nodeName2id")(s_node).exec();
 			txn.commit();
 
 			if (res.size() ==1 ){
@@ -51,7 +49,7 @@ namespace db {
 		pqxx::work txn(*db.dbh, "getnode");
 
 		// Get the Nodes name and last packet ID
-		pqxx::result node=txn.exec("select lastpacket,name from ukhasnet.nodes where id=" + txn.quote(nodeid));
+		pqxx::result node=txn.prepared("nodeID2Name")(nodeid).exec();
 		if (node.size() != 1 ){
 			return "Unable to get Node info";
 		}
@@ -64,21 +62,22 @@ namespace db {
 			lastpacket=node[0]["lastpacket"].as<int>();
 		}
 
-		// Get Pakcet
-		pqxx::result packet=txn.exec("select * from ukhasnet.packet where id=" + txn.quote(lastpacket));
+		// Get Pakcet - We don't currently use the data but it's a test that we have a valid packet
+		pqxx::result packet=txn.prepared("getPacket")(lastpacket).exec();
 		if (packet.size() != 1 ){
 			return "Unable to find Packet";
 		}
 
-		pqxx::result packetrx=txn.exec("select packet_rx.id as rxid, packet_rx_time, uploadid, name from ukhasnet.packet_rx left join ukhasnet.nodes on packet_rx.gatewayid=nodes.id where packetid=" + txn.quote(lastpacket));
+		// Get the received packets
+		pqxx::result packetrx=txn.prepared("getPacketRX")(lastpacket).exec();
 
-
+		// Generate the reply
 		std::string reply;
 		reply = "Node " + nodename;
 		for (pqxx::result::const_iterator row = packetrx.begin(); row != packetrx.end(); ++row)	{
 			reply += ", Uploaded by " + row["name"].as<std::string>();
-			pqxx::result path=txn.exec("select position, name from ukhasnet.path left join ukhasnet.nodes on path.nodeid=nodes.id where packet_rx_id=" + txn.quote(row["rxid"].as<int>()) + " order by position;");
-			if (packet.size() >= 1 ){
+			pqxx::result path=txn.prepared("getPacketPath")(row["rxid"].as<int>()).exec();
+			if (path.size() >= 1 ){
 				reply += " via [";
 				for (pqxx::result::const_iterator rxrow = path.begin(); rxrow != path.end(); ++rxrow) {
 					if (rxrow != path.begin()) {
@@ -98,9 +97,5 @@ namespace db {
 		int id=getNodeID(node);
 		return getNodeLastPacket(id);
 	}
-
-
-
-
 }
 }

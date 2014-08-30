@@ -90,6 +90,13 @@ namespace UKHASnet {
 		dbh->prepare("getUpload", "select time, packet, rssi, name  from ukhasnet.upload left join ukhasnet.nodes on upload.nodeid=nodes.id where upload.id=$1;")("integer");
 		dbh->prepare("irc_msg", "INSERT INTO ukhasnet.irc_msg (src_nick, src_chan, gatewayid, nodeid, message, status) values ($1, $2, $3, $4, $5, $6);")("varchar", pqxx::prepare::treat_string)("varchar", pqxx::prepare::treat_string)("integer")("integer")("varchar", pqxx::prepare::treat_string)("varchar", pqxx::prepare::treat_string);
 
+		// Prepared statements for db::Nodes Class
+		dbh->prepare("nodeName2id","select id from ukhasnet.nodes where name=$1;")("varchar", pqxx::prepare::treat_string);
+		dbh->prepare("nodeID2Name","select lastpacket,name from ukhasnet.nodes where id=$1;")("integer");
+		dbh->prepare("getPacket","select originid, sequence, checksum from ukhasnet.packet where id=$1;")("integer");
+		dbh->prepare("getPacketRX","select packet_rx.id as rxid, packet_rx_time, uploadid, name from ukhasnet.packet_rx left join ukhasnet.nodes on packet_rx.gatewayid=nodes.id where packetid=$1;")("integer");
+		dbh->prepare("getPacketPath","select position, name from ukhasnet.path left join ukhasnet.nodes on path.nodeid=nodes.id where packet_rx_id=$1 order by position;")("integer");
+
 		return connected;
 	}
 
