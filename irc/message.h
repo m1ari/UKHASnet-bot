@@ -29,7 +29,7 @@ class Message {
 		void setHost(std::string h);
 		void setDest(std::string d);
 		void setText(std::string m);
-		void reply(std::string s, bool privmsg=false) const;	// false: NOTICE, true: PRIVMSG
+		void reply(std::string s, bool privmsg=true) const;	// false: NOTICE, true: PRIVMSG
 
 		std::string getNick() const;
 		std::string getUser() const;
