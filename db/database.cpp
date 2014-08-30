@@ -3,6 +3,7 @@
 //#include <cstdio>
 #include <iostream>
 #include <pqxx/pqxx>
+#include <string>
 //#include <unistd.h>
 #include "database.h"
 //#include "irc/server.h"
@@ -139,13 +140,33 @@ namespace UKHASnet {
 		return false;
 	}
 
-	bool Database::getNode(irc::Message src, std::string text){
-		/*
-		pqxx::work w(dbh, "mytransaction");  
-		w.exec("INSERT INTO city(city_name) VALUES ('Ljubljana');");  
-		w.commit(); 
-		*/
-		return false;
+	std::string Database::getUpload(irc::Message msg){
+		// Get upload ID from request
+		std::string data=msg.getText().substr(8);
+		size_t p = data.find_first_of("\r\n");
+		data.erase(p);
+
+		// TODO we should test it's a number 
+		std::cout << "getUpload looking for " << data << std::endl;
+
+		// query ukhasnet.upload for id
+		pqxx::work txn(*dbh, "getupload");
+		pqxx::result upload = txn.exec("select time, packet, rssi, name  from ukhasnet.upload left join ukhasnet.nodes on upload.nodeid=nodes.id where upload.id=" + txn.quote(data));
+		txn.commit();
+
+		std::cout << "getUpload: Query complete got: " << upload.size() << " rows back " << std::endl;
+		if (upload.size() != 1){
+			return "Unable to find uploaded packet with ID=" + data;
+		}
+
+		// Create reply string
+		std::string out;
+		out  = "Packet: " + upload[0]["packet"].as<std::string>();
+		out += " was recieved by " + upload[0]["name"].as<std::string>();
+		out += " at " + upload[0]["time"].as<std::string>();
+		out += " with rssi of " + upload[0]["rssi"].as<std::string>();
+
+		return out;
 	}
 
 }

@@ -113,9 +113,9 @@ namespace UKHASnet {
 				} else if (msg.getText().find("!chippy") == 0){
 					std::cout << "Chippy(" << msg.getNick() << "): " << msg.getText() << std::endl;
 				} else if (msg.getText().find("!upload") == 0){
-					// !upload <ID>
-					//db.upload(msg);
 					std::cout << "Upload(" << msg.getNick() << "): " << msg.getText() << std::endl;
+					// !upload <ID>
+					msg.reply(db.getUpload(msg));
 				} else if (msg.getText().find("!msg") == 0){
 					// !msg name@gateway Message - Used for the conference badges
 					db.sendMessage(msg);

@@ -3,6 +3,7 @@
 
 
 #include <pqxx/pqxx>
+#include <string>
 #include "../irc/message.h"
 
 namespace UKHASnet {
@@ -36,7 +37,7 @@ class Database {
 		bool isConnected() const;
 
 		bool sendMessage(irc::Message msg);
-		bool getNode(irc::Message src, std::string text);
+		std::string getUpload(irc::Message msg);
 
 	protected:
 
