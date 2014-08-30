@@ -70,34 +70,27 @@ namespace db {
 			return "Unable to find Packet";
 		}
 
-		/* 
-		ukhasnet-prod1=# select * from ukhasnet.packet where id=919673;
-		id   | originid | sequence | checksum
-		--------+----------+----------+----------
- 		919673 |       63 | t        |    54574
-		*/
+		pqxx::result packetrx=txn.exec("select packet_rx.id as rxid, packet_rx_time, uploadid, name from ukhasnet.packet_rx left join ukhasnet.nodes on packet_rx.gatewayid=nodes.id where packetid=" + txn.quote(lastpacket));
 
-		pqxx::result packetrx=txn.exec("select packet_rx_time, uploadid, name from ukhasnet.packet_rx left join ukhasnet.nodes on packet_rx.gatewayid=nodes.id where packetid=" + txn.quote(lastpacket));
-
-		/*
-		ukhasnet-prod1=# select * from ukhasnet.packet_rx where packetid= 919673;
-		id    | packetid | gatewayid |      packet_rx_time       | uploadid
-		---------+----------+-----------+---------------------------+----------
- 		1155696 |   919673 |         6 | 2014-08-24 12:14:25.99302 |  1157400
-		ukhasnet-prod1=# select * from ukhasnet.packet_rx left join ukhasnet.nodes on packet_rx.gatewayid=nodes.id  where packetid= 919673;
-   		id    | packetid | gatewayid |      packet_rx_time       | uploadid | id | name |         owner         | locationid | typeid | lastpacket
-		---------+----------+-----------+---------------------------+----------+----+------+-----------------------+------------+--------+------------
- 		1155696 |   919673 |         6 | 2014-08-24 12:14:25.99302 |  1157400 |  6 | AB   | jcoxon - Gateway Node |     310090 |      2 |     921745
-
-		*/
-		txn.commit();
 
 		std::string reply;
 		reply = "Node " + nodename;
 		for (pqxx::result::const_iterator row = packetrx.begin(); row != packetrx.end(); ++row)	{
-			// TODO add in path
-			reply += ", Uploaded by " + row["name"].as<std::string>() + " at " + row["packet_rx_time"].as<std::string>() + " id is " + row["uploadid"].as<std::string>();
+			reply += ", Uploaded by " + row["name"].as<std::string>();
+			pqxx::result path=txn.exec("select position, name from ukhasnet.path left join ukhasnet.nodes on path.nodeid=nodes.id where packet_rx_id=" + txn.quote(row["rxid"].as<int>()) + " order by position;");
+			if (packet.size() >= 1 ){
+				reply += " via [";
+				for (pqxx::result::const_iterator rxrow = path.begin(); rxrow != path.end(); ++rxrow) {
+					if (rxrow != path.begin()) {
+						reply +=",";
+					}
+					reply +=rxrow["name"].as<std::string>();
+				}
+				reply += "]";
+			}
+			reply += " at " + row["packet_rx_time"].as<std::string>() + " id is " + row["uploadid"].as<std::string>();
 		}
+		txn.commit();
 		return reply;
 	}
 
