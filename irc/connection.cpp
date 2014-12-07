@@ -61,14 +61,20 @@ namespace irc {
 		int r;
 		regex_t r_privmsg;
 		//:mfa298!~mfa298@gateway.yapd.net PRIVMSG #ukhasnet :may not be ideal
-		//if ( (r=regcomp(&r_privmsg, ":([^!]+)!([^@]+)@([^ ]+) PRIVMSG ([^:]+) :(.*)", REG_EXTENDED)) != 0){
-		if ( (r=regcomp(&r_privmsg, ":(.+) PRIVMSG ([^:]+) :(.*)", REG_EXTENDED)) != 0){
+		if ( (r=regcomp(&r_privmsg, ":(.+) (PRIVMSG) ([^:]+) :(.*)", REG_EXTENDED)) != 0){
 			char buffer[100];
 			regerror(r,&r_privmsg,buffer,100);
 			fprintf(stderr, "Error: Compiling PRIVMSG Regex(%d):\n\t%s\n", r, buffer);
 			return;
 		}
-		// TODO Handle NOTICE
+		regex_t r_notice;
+		// :mfa298!~mfa298@gateway.yapd.net NOTICE #ukhasnet-test :Test Notice
+		if ( (r=regcomp(&r_notice, ":(.+) (NOTICE) ([^:]+) :(.*)", REG_EXTENDED)) != 0){
+			char buffer[100];
+			regerror(r,&r_notice,buffer,100);
+			fprintf(stderr, "Error: Compiling NOTICE Regex(%d):\n\t%s\n", r, buffer);
+			return;
+		}
 		regex_t r_join;
 		//:mfa298!~mfa298@gateway.yapd.net JOIN #ukhasnet
 		if ( (r=regcomp(&r_join, ":(.+) JOIN (.*)", REG_EXTENDED)) != 0){
@@ -244,7 +250,8 @@ namespace irc {
 
 				if (line.find("PING") == 0){
 					sendPong(line);
-				} else if (regexec(&r_privmsg, line.c_str(), n_matches, matches,0) == 0) {
+				} else if (  (regexec(&r_privmsg, line.c_str(), n_matches, matches,0) == 0)
+				          || (regexec(&r_notice , line.c_str(), n_matches, matches,0) == 0) ) {
 					Message m;
 					std::string userhost=line.substr(matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so);
 					if (regexec(&r_user, userhost.c_str(), n_umatches,umatches,0) == 0){
@@ -252,8 +259,9 @@ namespace irc {
 						m.setUser(userhost.substr(umatches[2].rm_so, umatches[2].rm_eo-umatches[2].rm_so));
 						m.setHost(userhost.substr(umatches[3].rm_so, umatches[3].rm_eo-umatches[3].rm_so));
 					}
-					m.setDest(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so));
-					m.setText(line.substr(matches[3].rm_so, matches[3].rm_eo-matches[3].rm_so));
+					m.setType(line.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so));
+					m.setDest(line.substr(matches[3].rm_so, matches[3].rm_eo-matches[3].rm_so));
+					m.setText(line.substr(matches[4].rm_so, matches[4].rm_eo-matches[4].rm_so));
 					h.addMessage(m);
 				} else if ((r=regexec(&r_join, line.c_str(), n_matches, matches,0)) == 0) {
 					std::cout << "JOIN: " << line << std::endl;
@@ -327,6 +335,7 @@ namespace irc {
 		// Disconnect from server
 
 		regfree(&r_privmsg);
+		regfree(&r_notice);
 		regfree(&r_join);
 		regfree(&r_part);
 		regfree(&r_numeric);

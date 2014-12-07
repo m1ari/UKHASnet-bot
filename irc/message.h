@@ -15,6 +15,9 @@ class Message {
 		std::string dest;
 		std::string text;
 		irc::Connection *server;
+		std::string type;	// Enum might be better but this may only be a better option for C++11
+		// enum e_type {Other, NOTICE, PRIVMSG};
+		// e_type type;
 
 	public:
 		Message();
@@ -29,6 +32,7 @@ class Message {
 		void setHost(std::string h);
 		void setDest(std::string d);
 		void setText(std::string m);
+		void setType(std::string t);		// NOTICE / PRIVMSG
 		void reply(std::string s, bool privmsg=true) const;	// false: NOTICE, true: PRIVMSG
 
 		std::string getNick() const;
@@ -36,6 +40,8 @@ class Message {
 		std::string getHost() const;
 		std::string getDest() const;
 		std::string getText() const;
+		bool isPRIVMSG() const;
+		bool isNOTICE() const;
 	protected:
 };
 

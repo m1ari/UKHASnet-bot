@@ -39,6 +39,9 @@ namespace irc {
 	void Message::setText(std::string in){
 		text=in;
 	}
+	void Message::setType(std::string in){
+		type=in;
+	}
 	void Message::reply(std::string s, bool privmsg) const {
 		if (server->isChannel(dest)){
 			if (privmsg){
@@ -69,6 +72,16 @@ namespace irc {
 	}
 	std::string Message::getText() const{
 		return text;
+	}
+	bool Message::isPRIVMSG() const{
+		if (type == "PRIVMSG")
+			return true;
+		return false;
+	}
+	bool Message::isNOTICE() const{
+		if (type == "NOTICE")
+			return true;
+		return false;
 	}
 
 }
