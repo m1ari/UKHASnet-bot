@@ -1,4 +1,5 @@
 #include "message.h"
+#include <iostream>
 
 namespace UKHASnet {
 namespace irc {
@@ -43,18 +44,23 @@ namespace irc {
 		type=in;
 	}
 	void Message::reply(std::string s, bool privmsg) const {
-		if (server->isChannel(dest)){
-			if (privmsg){
-				server->sendMsg(dest,s);
+		if (isPRIVMSG()){
+			if (server->isChannel(dest)){
+				if (privmsg){
+					server->sendMsg(dest,s);
+				} else {
+					server->sendNotice(dest,s);
+				}
 			} else {
-				server->sendNotice(dest,s);
+				if (privmsg){
+					server->sendMsg(nick,s);
+				} else {
+					server->sendNotice(nick,s);
+				}
 			}
 		} else {
-			if (privmsg){
-				server->sendMsg(nick,s);
-			} else {
-				server->sendNotice(nick,s);
-			}
+			// Wasn't a PRIVMSG, we're not supposed to reply
+			std::cerr << "Message, trying to respond to something that's not a PRIVMSG" << std::endl << "\t" << s << std::endl;
 		}
 	}
 
