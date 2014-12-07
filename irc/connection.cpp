@@ -129,6 +129,7 @@ namespace irc {
 		struct sockaddr_in dest;
 		struct hostent *he;
 		int bytes=0;		// Number of bytes read
+		bool connecterr=false;
 
 		std::string buffer;	// Buffer to work with
 		char readbuff[513];	// read Buffer	(max line is 512)
@@ -160,6 +161,7 @@ namespace irc {
 				// Create Socket
 				if ((sockfd = socket(AF_INET,SOCK_STREAM, 0)) < 0 ){
 					perror("Error(irc::Connection-socket)");
+					connecterr=true;
 					goto noconnect;
 				}
 
@@ -169,6 +171,7 @@ namespace irc {
 				tv.tv_usec = 100 * 1000;
 				if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
 					perror("Error(irc::Connection-SO_RCVTIMEO)");
+					connecterr=true;
 					goto noconnect;
 				}
 
@@ -176,6 +179,7 @@ namespace irc {
 				int enable=1;
 				if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE,&enable,sizeof(enable)) < 0) {
 					perror("Error(irc::Connection-SO_KEEPALIVE)");
+					connecterr=true;
 					goto noconnect;
 				}
 
@@ -183,6 +187,7 @@ namespace irc {
 				enable=60;
 				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE,&enable,sizeof(enable)) < 0) {
 					perror("Error(irc::Connection-TCP_KEEPIDLE)");
+					connecterr=true;
 					goto noconnect;
 				}
 
@@ -190,6 +195,7 @@ namespace irc {
 				enable=5;
 				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL,&enable,sizeof(enable)) < 0) {
 					perror("Error(irc::Connection-TCP_KEEPINTVL)");
+					connecterr=true;
 					goto noconnect;
 				}
 
@@ -197,12 +203,14 @@ namespace irc {
 				enable=4;
 				if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT,&enable,sizeof(enable)) < 0) {
 					perror("Error(irc::Connection-TCP_KEEPCNT)");
+					connecterr=true;
 					goto noconnect;
 				}
 
 				// Lookup hostname
 				if ((he=gethostbyname(s.getServer().c_str())) == NULL ) {
 					perror("Error(irc::Connection-hostname)");
+					connecterr=true;
 					goto noconnect;
 				}
 
@@ -218,6 +226,7 @@ namespace irc {
 				printf("Connecting to %s:%d\n",ip,ntohs(dest.sin_port));
 				if (::connect(sockfd, (struct sockaddr *)&dest, sizeof(dest))<0){
 					perror("Error(irc::Connection-connect)");
+					connecterr=true;
 					goto noconnect;
 				}
 				printf("Connected \n");
@@ -227,6 +236,13 @@ namespace irc {
 				//sendPassword();
 			}
 			noconnect:
+			// If there was a connection error clean up
+			if (connecterr == true ){
+				close(sockfd);
+				connecterr=false;
+				sockfd=0;
+				sleep(1);
+			}
 
 			// TODO If ndashes >0 and a suiable time has passed see if we can change to our default nick
 
